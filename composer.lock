@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "41f37fae3927507028413b0aa13e7b71",
+    "content-hash": "359366d81cb237af19defd5bb831dd95",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -1277,6 +1277,44 @@
                 "storage"
             ],
             "time": "2019-02-01T08:50:36+00:00"
+        },
+        {
+            "name": "miloske85/php-cli-table",
+            "version": "v0.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/miloske85/php-cli-table.git",
+                "reference": "85ea536b48e56a862c4b5b12ee5cbcc2a6b2e2fa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/miloske85/php-cli-table/zipball/85ea536b48e56a862c4b5b12ee5cbcc2a6b2e2fa",
+                "reference": "85ea536b48e56a862c4b5b12ee5cbcc2a6b2e2fa",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Miloske85\\php_cli_table\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Milos Milutinovic",
+                    "email": "milos.milutinovic@live.com",
+                    "homepage": "http://miloske.tk"
+                }
+            ],
+            "description": "Makes tables in CLI output",
+            "homepage": "https://github.com/miloske85/php-cli-table",
+            "time": "2018-01-26T20:50:29+00:00"
         },
         {
             "name": "monolog/monolog",

@@ -16,6 +16,7 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\KubernetesNamespace;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
+use Miloske85\php_cli_table\Table as CliTable;
 
 /*
 php kbuild build \
@@ -124,17 +125,18 @@ class PoolStatusTable
 
     public function table() {
         // Pool status
+        print_r($this->pool);
         $statusRows = array();
         $finishedJobs = $this->pool->getFinished();
-        foreach ($finishedJobs as $pid => $status) {
+        foreach ($this->jobs as $pid => $status) {
             $jobName = $this->jobs[$pid];
             array_push($statusRows, array(
                 $jobName,
-                round($status->getCurrentExecutionTime(), 2),
+                '1',
+                //round($this->pool->getCurrentExecutionTime($pid), 2),
                 'Done'
             ));
-        }
-    
+        }    
         return $statusRows;
     }
 
@@ -242,10 +244,25 @@ class Build extends Command
         // Add the pid to the array so we can use pretty names
         $poolStatus->addJob($jobName, $pid);
 
-        $pool->waitWithStatus($poolStatus);
+        // Ensure namespace exists
+        $jobName = 'Declare Namespace';
+        $pid = ($pool->add(new DeclareNamespace(
+            array(
+                'namespace' => $this->argument('app') . '-' . $this->argument('environment'),
+                'master' => $master,
+                'authentication' => $authentication,
+                'certificateAuthorityData' => $this->argument('certificate-authority-data'),
+            )
+        ))->getPid());
+        // Add the pid to the array so we can use pretty names
+        $poolStatus->addJob($jobName, $pid);
 
-        //$this->table($poolStatus->headers(), $poolStatus->table());
 
+        // Retrieve status table
+        $table = new CliTable($poolStatus->table(), $poolStatus->headers());
+        echo $table->getTable();
+
+        $pool->wait();
 
     }
 
