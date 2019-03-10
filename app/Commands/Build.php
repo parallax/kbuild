@@ -51,7 +51,9 @@ class CustomPool extends Pool
             }
             usleep($this->sleepTime);
 
-            print_r($poolStatus->table());
+            $table = new CliTable($poolStatus->table(), $poolStatus->headers());
+            echo $table->getTable();
+            echo "\n";
         }
 
         return $this->results;
@@ -103,6 +105,33 @@ class DeclareNamespace extends Task
     }
 }
 
+class BuildDockerFile extends Task
+{
+
+    protected $args;
+    protected $dockerFiles;
+    protected $buildFile;
+
+    public function __construct($args) {
+        $this->dockerFiles = $args['dockerFiles'];
+        $this->buildFile = $args['buildFile'];
+    }
+
+    public function configure()
+    {
+    }
+
+    public function run()
+    {
+        // Do the real work here.
+        // Initialise the API
+
+        $return = $this->dockerFiles->build($this->buildFile);
+
+        return $return;
+    }
+}
+
 class PoolStatusTable
 {
 
@@ -125,23 +154,32 @@ class PoolStatusTable
 
     public function table() {
         // Pool status
-        print_r($this->pool);
         $statusRows = array();
-        $finishedJobs = $this->pool->getFinished();
-        foreach ($this->jobs as $pid => $status) {
-            $jobName = $this->jobs[$pid];
+        foreach ($this->jobs as $process => $status) {
+            $jobName = $this->jobs[$process]['jobName'];
+            $process = $this->jobs[$process]['process'];
+            if ($process->isRunning() === true) {
+                $textStatus = 'Running';
+            } elseif ($process->isSuccessful() === true) {
+                $textStatus = 'Success';
+            } elseif ($process->isTerminated() === true) {
+                $textStatus = 'Finished';
+            }
             array_push($statusRows, array(
                 $jobName,
-                '1',
-                //round($this->pool->getCurrentExecutionTime($pid), 2),
-                'Done'
+                round($process->getCurrentExecutionTime(), 2),
+                $textStatus
             ));
-        }    
+        }
+
         return $statusRows;
     }
 
-    public function addJob($job, $pid) {
-        $this->jobs[$pid] = $job;
+    public function addJob($job, $process) {
+        $this->jobs[$process->getPid()] = array(
+            'jobName' => $job,
+            'process' => $process
+        );
     }
 
     public function jobs() {
@@ -149,6 +187,72 @@ class PoolStatusTable
     }
 
         
+}
+
+class DockerFiles {
+
+    protected $directory;
+    protected $asArray;
+
+    public function __construct($args) {
+        $this->directory = $args['directory'];
+        if (count($this->asArray()) === 0) {
+            $this->noFiles();
+        }
+    }
+
+    public function noFiles() {
+        echo "No Dockerfiles have been found - this might be an error or in some edge cases it might be fine. Beware!\n";
+    }
+
+    public function build($dockerFile) {
+        exec('docker build --no-cache -t test -f ' . $this->directory . '/k8s/docker/' . $dockerFile . ' ' . $this->directory);
+    }
+
+    public function asArray() {
+        // Find all docker files in k8s/docker that we need to build
+        $dockerFiles = scandir($this->directory . '/k8s/docker/');
+
+        // Filter for anything beginning with a .
+        foreach ($dockerFiles as $key => $dockerFile) {
+            if(strpos($dockerFile, '.') === 0) {
+                unset($dockerFiles[$key]);
+            }
+        }
+
+        return $dockerFiles;
+    }
+
+    public function asTableArray() {
+
+        $response = array();
+
+        if (count($this->asArray()) !== 0) {
+            foreach ($this->asArray() as $key => $value) {
+                array_push($response, array($value));
+            }
+            return $response;
+        }
+        
+        else {
+            return array();
+        }
+        
+
+    }
+
+    public function asTable() {
+        
+        if (count($this->asArray()) !== 0) {
+            $headers = array(
+                'Dockerfile',
+            );
+            $table = new CliTable($this->asTableArray(), $headers);
+            echo $table->getTable();
+            echo "\n";
+        }
+    }
+
 }
 
 
@@ -191,9 +295,10 @@ class Build extends Command
             'clientKey' => $this->argument('client-key-data')
         ];
 
-        // Create the worker pool
+        // Create the worker pool and specify a status refresh rate for the wait function
         $pool = CustomPool::create()
-            ->autoload(__DIR__ . '/../../vendor/autoload.php');
+            ->autoload(__DIR__ . '/../../vendor/autoload.php')
+            ->sleepTime(500000);
 
         // Check for async support
         if ($pool->isSupported() === TRUE) {
@@ -202,7 +307,11 @@ class Build extends Command
         else {
             $this->error('Asynchronous execution is not supported on this platform. Builds will run more slowly.');
         }
-        
+
+        // Set the buildDirectory
+        $buildDirectory = getcwd();
+        $this->info("Building from $buildDirectory");
+
         // Output what we're building
         $this->table(
             // Headers
@@ -230,39 +339,53 @@ class Build extends Command
             )
         );
 
+        // Get Dockerfiles
+        $dockerFiles = new DockerFiles(
+            array(
+                'directory' => getcwd(),
+                'pool' => $pool
+            )
+        );
+
+        $this->info('Found ' . count($dockerFiles->asArray()) . ' Dockerfiles');
+        $dockerFiles->asTable();
+
         // Job handling
+
         // Ensure namespace exists
         $jobName = 'Declare Namespace';
-        $pid = ($pool->add(new DeclareNamespace(
+        /*$process = ($pool->add(new DeclareNamespace(
             array(
                 'namespace' => $this->argument('app') . '-' . $this->argument('environment'),
                 'master' => $master,
                 'authentication' => $authentication,
                 'certificateAuthorityData' => $this->argument('certificate-authority-data'),
             )
-        ))->getPid());
-        // Add the pid to the array so we can use pretty names
-        $poolStatus->addJob($jobName, $pid);
+        )));
+        // Add the process to the array so we can use pretty names
+        $poolStatus->addJob($jobName, $process);*/
 
-        // Ensure namespace exists
-        $jobName = 'Declare Namespace';
-        $pid = ($pool->add(new DeclareNamespace(
+        // Build Dockerfile
+        $jobName = 'Build nginx-php';
+        $process = ($pool->add(new BuildDockerFile(
             array(
-                'namespace' => $this->argument('app') . '-' . $this->argument('environment'),
-                'master' => $master,
-                'authentication' => $authentication,
-                'certificateAuthorityData' => $this->argument('certificate-authority-data'),
+                'dockerFiles' => $dockerFiles,
+                'buildFile' => 'nginx-php',
             )
-        ))->getPid());
-        // Add the pid to the array so we can use pretty names
-        $poolStatus->addJob($jobName, $pid);
+        ))->then(function ($output) {
+            //var_dump($output);
+        })->catch(function ($exception, $process) {
+            $this->error(trim('Error building Dockerfile: ' . $exception->getMessage()));
+            dd($process);
+            throw new Exception("Error", 1);
+        }));
 
+        // Add the process to the array so we can use pretty names
+        $poolStatus->addJob($jobName, $process);
 
-        // Retrieve status table
-        $table = new CliTable($poolStatus->table(), $poolStatus->headers());
-        echo $table->getTable();
+        // Run current queue and output status table
+        $pool->waitWithStatus($poolStatus);
 
-        $pool->wait();
 
     }
 
