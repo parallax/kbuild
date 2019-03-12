@@ -12,7 +12,7 @@ use DateTime;
 use Exception;
 
 /*
-php kbuild build \
+php ~/Code/kbuild/kbuild create \
 'https://api.prlx.kontainer.cloud' \
 '/Users/lawrencedudley/Code/kbuild/certs/client-certificate-data' \
 '/Users/lawrencedudley/Code/kbuild/certs/client-key-data' \
@@ -26,25 +26,58 @@ php kbuild build \
 class TaskSpoolerInstance
 {
 
-    protected $instance;
-    protected $jobs;
+    protected   $instance;
+    protected   $jobs;
+    protected   $dependencies;
+    private     $tableData;
 
     public function __construct() {
         $this->instance = '/tmp/' . hash('md5', microtime() . rand());
         $this->export = 'export TS_SLOTS=100; export TS_SOCKET=' . $this->instance . '; ';
-        $this->jobs = array();
+        $this->jobs = array ();
+        $this->dependencies = array ();
         echo $this->export . "\n";
     }
 
     public function addJob($name, $command, $dependency = NULL) {
+
         if ($dependency !== NULL) {
             $dependencyCommand = '-D ' . $dependency . ' ';
         }
+
         else {
             $dependencyCommand = '';
         }
         $jobId = trim(shell_exec($this->export . 'tsp ' . "-L '$name' $dependencyCommand" .  "bash -c '$command'"));
         $info = trim(shell_exec($this->export . 'tsp -i ' . $jobId));
+
+        $this->dependencies[$jobId]['name'] = $name;
+        $this->dependencies[$jobId]['jobId'] = $jobId;
+
+        // Add to the dependencies array that we'll use later to figure out what jobs depend on each other
+        if ($dependency !== NULL) {
+            // This job has a dependency. Add it to the dependencies array and figure out which level it sits at.
+            // First check the job this depends on exists, error if not
+            if (!isset($this->dependencies[$dependency])) {
+                echo "💥💥💥 Job \"$name\" depends on JobID $dependency which doesn't exist 💥💥💥\n";
+                exit(1);
+            }
+            // If it does in fact exist...
+            // Push the dependency to the children array of the job this job depends on
+            array_push($this->dependencies[$dependency]['children'], $jobId);
+            // Then create a top-level item with the level set to that of the job it is dependent on +1
+            $this->dependencies[$jobId]['level'] = $this->dependencies[$dependency]['level'] + 1;
+            if (!isset($this->dependencies[$jobId]['children'])) {
+                $this->dependencies[$jobId]['children'] = array ();
+            }
+        }
+
+        else {
+            $this->dependencies[$jobId]['level'] = 0;
+            if (!isset($this->dependencies[$jobId]['children'])) {
+                $this->dependencies[$jobId]['children'] = array ();
+            }
+        }
 
         $this->jobs[$jobId] = array(
             'id' => $jobId,
@@ -137,6 +170,32 @@ class TaskSpoolerInstance
         return $interval->format("%im %ss");
     }
 
+    private function dependencyIterator($job) {
+
+
+        // Set the name up with -- and > if it's a child
+        if ($job['level'] === 0) {
+            $name = $job['name'];
+        }
+        else {
+            $name = str_repeat('-', $job['level']) . '> ' . $job['name'];
+        }
+        $jobId = $job['jobId'];
+
+        array_push($this->tableData, array(
+            'name' => $name,
+            'duration' => $this->jobs[$jobId]['duration'],
+            'exit' => $this->jobs[$jobId]['exit'],
+            'lastLine' => $this->jobs[$jobId]['lastLine'],
+        ));
+
+        if (count($job['children']) > 0) {
+            foreach ($job['children'] as $key => $child) {
+                $this->dependencyIterator($this->dependencies[$child]);
+            }
+        }
+    }
+
     public function wait() {
         $headers = array(
             'Job',
@@ -145,73 +204,31 @@ class TaskSpoolerInstance
             'Last Output Line',
         );
         $done = false;
+
         while ($done !== true) {
             sleep(1);
             $tabulated = array();
-            $tableData = array();
+            $this->tableData = array();
             $this->getJobs();
             $done = true;
-            foreach ($this->jobs as $jobId => $job) {
-                if ($job['exit'] === '-') {
+
+            foreach ($this->dependencies as $jobId => $job) {
+                // Filter for ones that are level 0:
+                if ($job['level'] === 0) {
+                    $this->dependencyIterator($job);
+                }
+
+                if ($this->jobs[$jobId]['exit'] === '-') {
                     $done = false;
                 }
                 // An error has occurred
-                if ($job['exit'] !== '-' && $job['exit'] !== '0') {
-                    echo "💥💥💥 ERROR RUNNING JOB " . $job['name'] . " 💥💥💥\n" . $job['output'];
+                if ($this->jobs[$jobId]['exit'] !== '-' && $this->jobs[$jobId]['exit'] !== '0') {
+                    echo "💥💥💥 Error running job \"" . $this->jobs[$jobId]['name'] . "\". Exit Code: " . $this->jobs[$jobId]['exit'] . " 💥💥💥\nLog:\n" . $this->jobs[$jobId]['output'];
                     exit(1);
                 }
-                if (in_array($jobId, $tabulated) === FALSE) {
-                    array_push($tableData, array(
-                        $job['name'],
-                        $job['duration'],
-                        $job['exit'],
-                        $job['lastLine']
-                    ));
-                    array_push($tabulated, $jobId);
-                    // Search for jobs that have this jobId as a dependency
-                    foreach ($this->jobs as $dependantJobId => $dependantJob) {
-                        if ($dependantJob['dependency'] !== NULL) {
-                            if ($dependantJob['dependency'] == $jobId && in_array($dependantJobId, $tabulated) === FALSE) {
-                                array_push($tableData, array(
-                                    '-> ' . $dependantJob['name'],
-                                    $dependantJob['duration'],
-                                    $dependantJob['exit'],
-                                    $dependantJob['lastLine']
-                                ));
-                                array_push($tabulated, $dependantJobId);
-                            }
-                            foreach ($this->jobs as $dependantTwoJobId => $dependantTwoJob) {
-                                if ($dependantTwoJob['dependency'] !== NULL) {
-                                    if ($dependantTwoJob['dependency'] == $dependantJobId && in_array($dependantTwoJobId, $tabulated) === FALSE) {
-                                        array_push($tableData, array(
-                                            '---> ' . $dependantTwoJob['name'],
-                                            $dependantTwoJob['duration'],
-                                            $dependantTwoJob['exit'],
-                                            $dependantTwoJob['lastLine']
-                                        ));
-                                        array_push($tabulated, $dependantTwoJobId);
-
-                                        foreach ($this->jobs as $dependantThreeJobId => $dependantThreeJob) {
-                                            if ($dependantThreeJob['dependency'] !== NULL) {
-                                                if ($dependantThreeJob['dependency'] == $dependantTwoJobId && in_array($dependantThreeJobId, $tabulated)     === FALSE) {
-                                                    array_push($tableData, array(
-                                                        '-----> ' . $dependantThreeJob['name'],
-                                                        $dependantThreeJob['duration'],
-                                                        $dependantThreeJob['exit'],
-                                                        $dependantThreeJob['lastLine']
-                                                    ));
-                                                    array_push($tabulated, $dependantThreeJobId);
-                                                }
-                                            }  
-                                        }
-                                    }
-                                }  
-                            }
-                        }    
-                    }
-                }
             }
-            $table = new CliTable($tableData, $headers);
+
+            $table = new CliTable($this->tableData, $headers);
             echo $table->getTable();
         }
     }
@@ -252,11 +269,12 @@ class Create extends Command
 
         $taskSpooler = new TaskSpoolerInstance();
 
-        $stepOne = $taskSpooler->addJob('Docker', 'docker build --no-cache -t test -f k8s/docker/nginx-php .');
-        $stepTwo = $taskSpooler->addJob('Docker2', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepOne);
-        $stepThree = $taskSpooler->addJob('Docker3', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepTwo);
-        $stepFour = $taskSpooler->addJob('Docker4', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepThree);
-        $stepFive = $taskSpooler->addJob('Docker5', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepOne);
+        $stepOne = $taskSpooler->addJob('Step One', 'docker build --no-cache -t test -f k8s/docker/nginx-php .');
+        $stepTwo = $taskSpooler->addJob('Step Two', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepOne);
+        $stepThree = $taskSpooler->addJob('Step Three', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepTwo);
+        $stepFour = $taskSpooler->addJob('Step Four', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepThree);
+        $stepFive = $taskSpooler->addJob('Step Five', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepOne);
+        $stepSix = $taskSpooler->addJob('Step Six', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', 50);
 
         $taskSpooler->wait();
 
