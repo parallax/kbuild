@@ -31,12 +31,42 @@ class TaskSpoolerInstance
     protected   $dependencies;
     private     $tableData;
 
+    /* Usage:
+    Initialise your taskSpooler instance
+    $taskSpooler = new TaskSpoolerInstance();
+
+
+    // Add jobs to your taskspool. Returns the id of the job:
+    $jobId = $taskSpooler->addJob('Step One', 'docker build --no-cache -t test -f k8s/docker/nginx-php .');
+
+
+    // Add a job to your taskspool that should only run when the id of another job has completed:
+    $taskSpooler->addJob('Step Five', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $jobId);
+
+    // Wait for the queue to complete:
+    $taskSpooler->wait();
+
+    // Will output pretty table as follows:
+    +------------------+------------------+------------------+---------------------------------+
+    | Job              | Duration         | Exit Code        | Last Output Line                |
+    +------------------+------------------+------------------+---------------------------------+
+    | Step One         | 0m 7s            | 0                | Successfully tagged test:latest |
+    | -> Step Two      | 0m 7s            | 0                | Successfully tagged test:latest |
+    | --> Step Three   | 0m 6s            | 0                | Successfully tagged test:latest |
+    | ---> Step Four   | 0m 5s            | -                | ---> Running in 1453e97f6d0a    |
+    | -> Step Five     | 0m 7s            | 0                | Successfully tagged test:latest |
+    | Step Six         | 0m 7s            | 0                | Successfully tagged test:latest |
+    +------------------+------------------+------------------+---------------------------------+
+
+    The jobs are listed in order of dependencies with the -> bits signifying how deep down the dependency tree each function is
+
+    */
+
     public function __construct() {
         $this->instance = '/tmp/' . hash('md5', microtime() . rand());
         $this->export = 'export TS_SLOTS=100; export TS_SOCKET=' . $this->instance . '; ';
         $this->jobs = array ();
         $this->dependencies = array ();
-        echo $this->export . "\n";
     }
 
     public function addJob($name, $command, $dependency = NULL) {
@@ -235,6 +265,82 @@ class TaskSpoolerInstance
 
 }
 
+class DockerFiles {
+
+    protected $directory;
+    protected $asArray;
+
+    public function __construct($args) {
+        $this->directory = $args['directory'];
+        if (count($this->asArray()) === 0) {
+            $this->noFiles();
+        }
+    }
+
+    public function noFiles() {
+        echo "No Dockerfiles have been found - this might be an error or in some edge cases it might be fine. Beware!\n";
+    }
+
+    public function build($dockerFile) {
+        exec('docker build --no-cache -t test -f ' . $this->directory . '/k8s/docker/' . $dockerFile . ' ' . $this->directory);
+    }
+
+    public function asArray() {
+        // Find all docker files in k8s/docker that we need to build
+        $dockerFiles = scandir($this->directory . '/k8s/docker/');
+
+        // Filter for anything beginning with a .
+        foreach ($dockerFiles as $key => $dockerFile) {
+            if(strpos($dockerFile, '.') === 0) {
+                unset($dockerFiles[$key]);
+            }
+        }
+
+        return $dockerFiles;
+    }
+
+    public function asTableArray() {
+
+        $response = array();
+
+        if (count($this->asArray()) !== 0) {
+            foreach ($this->asArray() as $key => $value) {
+                array_push($response, array($value));
+            }
+            return $response;
+        }
+        
+        else {
+            return array();
+        }
+        
+
+    }
+
+    public function asTable() {
+        
+        if (count($this->asArray()) !== 0) {
+            $headers = array(
+                'Dockerfile',
+            );
+            $table = new CliTable($this->asTableArray(), $headers);
+            echo $table->getTable();
+            echo "\n";
+        }
+    }
+
+}
+
+function buildAndPushDocker($files, $buildDirectory, $app, $branch, $build, $taskSpooler, $repository) {
+    // For each docker file, get it queued up as a job
+    foreach ($files as $key => $dockerFile) {
+        $tag = $repository . ':' . $build;
+        $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag);
+    }
+}
+
+// Putting it all together
+
 class Create extends Command
 {
     /**
@@ -243,14 +349,14 @@ class Create extends Command
      * @var string
      */
     protected $signature = 'create 
-        {master : The url for the kubernetes api}
-        {client-certificate-data : Client certificate}
-        {client-key-data : Client key}
-        {certificate-authority-data : Certificate authority data}
-        {app : The name of the app}
-        {branch : The name of the app branch}
-        {environment : The name of the environment}
-        {build : The number of the build}';
+        {--kubeconfig=~/.kube/config : The path to the kubeconfig file}
+        {--app= : The name of the app}
+        {--branch= : The name of the app branch}
+        {--environment= : The name of the environment}
+        {--build= : The number of the build}
+        {--repository= : The docker repository to use}
+        {--cloud-provider=aws : Either aws or gcp}
+        {--no-docker-build : Skips Docker build if set}';
 
     /**
      * The description of the command.
@@ -267,14 +373,77 @@ class Create extends Command
     public function handle()
     {
 
+        // Check that options have been passed
+        $toCheck = array('app', 'branch', 'build', 'environment');
+        foreach ($toCheck as $key => $option) {
+            if(null === $this->option($option)) {
+                echo "You need to pass a value for --$option\n";
+                exit(1);
+            };
+        }
+
+        // Set the buildDirectory
+        $buildDirectory = getcwd();
+        $this->info("Building from $buildDirectory");
+
+        // Easy to understand version of --no-docker-build
+        if ($this->option('no-docker-build') == TRUE) {
+            $dockerBuild = 'No';
+        }
+        else {
+            $dockerBuild = 'Yes';
+        }
+
+        // Output what we're building
+        $this->table(
+            // Headers
+            [
+                'App',
+                'Branch',
+                'Build',
+                'Environment',
+                'Build Docker Images'
+            ],
+            // Data
+            [
+                [
+                    $this->option('app'),
+                    $this->option('branch'),
+                    $this->option('build'),
+                    $this->option('environment'),
+                    $dockerBuild
+                ]
+            ]
+        );
+
+        unset($dockerBuild);
+
+        // Initialise the taskspooler
         $taskSpooler = new TaskSpoolerInstance();
 
-        $stepOne = $taskSpooler->addJob('Step One', 'docker build --no-cache -t test -f k8s/docker/nginx-php .');
-        $stepTwo = $taskSpooler->addJob('Step Two', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepOne);
-        $stepThree = $taskSpooler->addJob('Step Three', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepTwo);
-        $stepFour = $taskSpooler->addJob('Step Four', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepThree);
-        $stepFive = $taskSpooler->addJob('Step Five', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', $stepOne);
-        $stepSix = $taskSpooler->addJob('Step Six', 'docker build --no-cache -t test -f k8s/docker/nginx-php .', 50);
+        // Initialise the dockerFiles as building these typically takes the longest!
+        $dockerFiles = new DockerFiles(
+            array(
+                'directory' => $buildDirectory,
+            )
+        );
+
+        $this->info('Found ' . count($dockerFiles->asArray()) . ' Dockerfiles');
+        $dockerFiles->asTable();
+
+        // Check if we're building docker images on this run
+        if ($this->option('no-docker-build') == FALSE) {
+            // Oooh, we are. Shiny.
+            buildAndPushDocker(
+                $dockerFiles->asArray(), 
+                $buildDirectory,
+                $this->option('app'),
+                $this->option('branch'),
+                $this->option('build'),
+                $taskSpooler,
+                $this->option('repository')
+            );
+        }
 
         $taskSpooler->wait();
 
