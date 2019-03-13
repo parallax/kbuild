@@ -12,15 +12,7 @@ use DateTime;
 use Exception;
 
 /*
-php ~/Code/kbuild/kbuild create \
-'https://api.prlx.kontainer.cloud' \
-'/Users/lawrencedudley/Code/kbuild/certs/client-certificate-data' \
-'/Users/lawrencedudley/Code/kbuild/certs/client-key-data' \
-'/Users/lawrencedudley/Code/kbuild/certs/certificate-authority-data' \
-'hiya' \
-'master' \
-'qa' \
-'1'
+php ~/Code/kbuild/kbuild create --app=hiya --branch=master --environment=qa --build=6 --aws-vpc=vpc-0779d109017c7cf60 --rds-sg=sg-03b42e737045975a3 --rds-subnet-group=kops-rds
 */
 
 class TaskSpoolerInstance
@@ -30,6 +22,7 @@ class TaskSpoolerInstance
     protected   $jobs;
     protected   $dependencies;
     private     $tableData;
+    private     $repositoryBase;
 
     /* Usage:
     Initialise your taskSpooler instance
@@ -67,6 +60,7 @@ class TaskSpoolerInstance
         $this->export = 'export TS_SLOTS=100; export TS_SOCKET=' . $this->instance . '; ';
         $this->jobs = array ();
         $this->dependencies = array ();
+        $this->repositoryBase = '';
     }
 
     public function addJob($name, $command, $dependency = NULL) {
@@ -268,13 +262,24 @@ class TaskSpoolerInstance
 class DockerFiles {
 
     protected $directory;
+    protected $buildDirectory;
     protected $asArray;
+    protected $app;
+    protected $branch;
+    protected $build;
+    protected $taskSpooler;
+    protected $cloudProvider;
 
     public function __construct($args) {
-        $this->directory = $args['directory'];
+        $this->buildDirectory = $args['buildDirectory'];
         if (count($this->asArray()) === 0) {
             $this->noFiles();
         }
+        $this->app = $args['app'];
+        $this->branch = $args['branch'];
+        $this->build = $args['build'];
+        $this->taskSpooler = $args['taskSpooler'];
+        $this->cloudProvider = $args['cloudProvider'];
     }
 
     public function noFiles() {
@@ -282,12 +287,12 @@ class DockerFiles {
     }
 
     public function build($dockerFile) {
-        exec('docker build --no-cache -t test -f ' . $this->directory . '/k8s/docker/' . $dockerFile . ' ' . $this->directory);
+        exec('docker build --no-cache -t test -f ' . $this->buildDirectory . '/k8s/docker/' . $dockerFile . ' ' . $this->buildDirectory);
     }
 
     public function asArray() {
         // Find all docker files in k8s/docker that we need to build
-        $dockerFiles = scandir($this->directory . '/k8s/docker/');
+        $dockerFiles = scandir($this->buildDirectory . '/k8s/docker/');
 
         // Filter for anything beginning with a .
         foreach ($dockerFiles as $key => $dockerFile) {
@@ -317,6 +322,24 @@ class DockerFiles {
 
     }
 
+    public function repositoryBase() {
+        switch ($this->cloudProvider) {
+            case 'aws':
+
+                $dockerLogin = `aws ecr get-login --no-include-email`;
+                preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
+                $repositoryBase = str_replace('https://', '', $repositoryBase[1]);
+
+                break;
+            
+            case 'gcp':
+                # code...
+                break;
+        }
+
+        return $repositoryBase;
+    }
+
     public function asTable() {
         
         if (count($this->asArray()) !== 0) {
@@ -329,57 +352,68 @@ class DockerFiles {
         }
     }
 
-}
+    public function buildAndPush() {
 
-function buildAndPushDocker($files, $buildDirectory, $app, $branch, $build, $taskSpooler, $provider) {
-    // For each docker file, get it queued up as a job
-    foreach ($files as $key => $dockerFile) {
+        $files = $this->asArray();
+        $buildDirectory = $this->buildDirectory;
+        $app = $this->app;
+        $branch = $this->branch;
+        $build = $this->build;
+        $taskSpooler = $this->taskSpooler;
+        $provider = $this->cloudProvider;
 
-        switch ($provider) {
-            case 'aws':
-
-                $dockerLogin = `aws ecr get-login --no-include-email`;
-                preg_match('/-p (.*=)/', $dockerLogin, $dockerPassword);
-                $dockerPassword = $dockerPassword[1];
-                preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
-                $repositoryBase = $repositoryBase[1];
-
-                // Run ECR login
-                $ecrLogin = `echo $dockerPassword | docker login -u AWS --password-stdin $repositoryBase`;
-
-                // Ensure that the ECR repository exists for this app
-                // Describe the repositories on the account
-                $repositories = json_decode(`aws ecr describe-repositories`);
-                if ($repositories === NULL) {
-                    echo "💥💥💥 Error getting ECR repositories. This could be an AWS or an IAM issue. 💥💥💥\n";
-                    exit(1);
-                }
-                
-                // See if any of the names match
-                $repositoryExists = FALSE;
-                foreach ($repositories->repositories as $key => $repository) {
-                    if ($repository->repositoryName === $app) {
-                        $repositoryExists = TRUE;
+        // For each docker file, get it queued up as a job
+        foreach ($files as $key => $dockerFile) {
+    
+            switch ($provider) {
+                case 'aws':
+    
+                    $dockerLogin = `aws ecr get-login --no-include-email`;
+                    preg_match('/-p (.*=)/', $dockerLogin, $dockerPassword);
+                    $dockerPassword = $dockerPassword[1];
+                    preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
+                    $repositoryBase = $repositoryBase[1];
+    
+                    // Run ECR login
+                    $ecrLogin = `echo $dockerPassword | docker login -u AWS --password-stdin $repositoryBase`;
+    
+                    // Ensure that the ECR repository exists for this app
+                    // Describe the repositories on the account
+                    $repositories = json_decode(`aws ecr describe-repositories`);
+                    if ($repositories === NULL) {
+                        echo "💥💥💥 Error getting ECR repositories. This could be an AWS or an IAM issue. 💥💥💥\n";
+                        exit(1);
                     }
-                }
-
-                // Doesn't exist, create it
-                if ($repositoryExists === FALSE) {
-                    $createRepository = `aws ecr create-repository --repository-name $app`;
-                }
-
-                $repositoryBase = str_replace('https://', '', $repositoryBase);
-
-                break;
-            
-            case 'gcp':
-                # code...
-                break;
+                    
+                    // See if any of the names match
+                    $repositoryExists = FALSE;
+                    foreach ($repositories->repositories as $key => $repository) {
+                        if ($repository->repositoryName === $app) {
+                            $repositoryExists = TRUE;
+                        }
+                    }
+    
+                    // Doesn't exist, create it
+                    if ($repositoryExists === FALSE) {
+                        $createRepository = `aws ecr create-repository --repository-name $app`;
+                    }
+    
+                    $repositoryBase = str_replace('https://', '', $repositoryBase);
+    
+                    break;
+                
+                case 'gcp':
+                    # code...
+                    break;
+            }
+    
+            $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
+            $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag);
+    
+            return $repositoryBase;
         }
-
-        $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
-        $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag);
     }
+
 }
 
 // Putting it all together
@@ -398,7 +432,12 @@ class Create extends Command
         {--environment= : The name of the environment}
         {--build= : The number of the build}
         {--cloud-provider=aws : Either aws or gcp}
-        {--no-docker-build : Skips Docker build if set}';
+        {--no-docker-build : Skips Docker build if set}
+        {--aws-vpc= : The VPC to use. Only used when cloud-provider is set to aws}
+        {--rds-sg= : The security group to use for RDS instances}
+        {--rds-subnet-group= : The RDS subnet group to use for RDS instances}
+        {--db-pause= : The amount of time in minutes to pause an Aurora instance after no activity}
+        {--db-per-branch : Whether to use one database per branch}';
 
     /**
      * The description of the command.
@@ -422,6 +461,23 @@ class Create extends Command
                 echo "You need to pass a value for --$option\n";
                 exit(1);
             };
+        }
+
+        // Check platform-specific options
+        switch ($this->option('cloud-provider')) {
+            case 'aws':
+                $toCheck = array('aws-vpc', 'rds-sg', 'db-pause', 'rds-subnet-group');
+                foreach ($toCheck as $key => $option) {
+                    if(null === $this->option($option)) {
+                        echo "You need to pass a value for --$option when using " . $this->option('cloud-provider') . " as a cloud provider\n";
+                        exit(1);
+                    };
+                }
+                break;
+            
+            case 'gcp':
+                # code...
+                break;
         }
 
         // Set the buildDirectory
@@ -466,7 +522,12 @@ class Create extends Command
         // Initialise the dockerFiles as building these typically takes the longest!
         $dockerFiles = new DockerFiles(
             array(
-                'directory' => $buildDirectory,
+                'buildDirectory'=>  $buildDirectory,
+                'app'           =>  $this->option('app'),
+                'branch'        =>  $this->option('branch'),
+                'build'         =>  $this->option('build'),
+                'taskSpooler'   =>  $taskSpooler,
+                'cloudProvider' =>  $this->option('cloud-provider')
             )
         );
 
@@ -476,19 +537,29 @@ class Create extends Command
         // Check if we're building docker images on this run
         if ($this->option('no-docker-build') == FALSE) {
             // Oooh, we are. Shiny.
-            buildAndPushDocker(
-                $dockerFiles->asArray(), 
-                $buildDirectory,
-                $this->option('app'),
-                $this->option('branch'),
-                $this->option('build'),
-                $taskSpooler,
-                $this->option('cloud-provider')
-            );
+            $dockerFiles->buildAndPush();
         }
 
-        $taskSpooler->wait();
+        // MySQL
 
+        $mysql = new MySQLProvisioner(
+            array(
+                'app'           =>  $this->option('app'),
+                'branch'        =>  $this->option('branch'),
+                'taskSpooler'   =>  $taskSpooler,
+                'cloudProvider' =>  $this->option('cloud-provider'),
+                'dbPerBranch'   =>  $this->option('db-per-branch'),
+                'pause'         =>  $this->option('db-pause'),
+                'environment'   =>  $this->option('environment'),
+                'rds-sg'        =>  $this->option('rds-sg'),
+                'aws-vpc'       =>  $this->option('aws-vpc'),
+                'rds-subnet-group'  => $this->option('rds-subnet-group')
+            )
+        );
+
+        $mysql->declare();
+
+        $taskSpooler->wait();
 
     }
 
