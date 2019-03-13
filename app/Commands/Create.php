@@ -331,10 +331,53 @@ class DockerFiles {
 
 }
 
-function buildAndPushDocker($files, $buildDirectory, $app, $branch, $build, $taskSpooler, $repository) {
+function buildAndPushDocker($files, $buildDirectory, $app, $branch, $build, $taskSpooler, $provider) {
     // For each docker file, get it queued up as a job
     foreach ($files as $key => $dockerFile) {
-        $tag = $repository . ':' . $build;
+
+        switch ($provider) {
+            case 'aws':
+
+                $dockerLogin = `aws ecr get-login --no-include-email`;
+                preg_match('/-p (.*=)/', $dockerLogin, $dockerPassword);
+                $dockerPassword = $dockerPassword[1];
+                preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
+                $repositoryBase = $repositoryBase[1];
+
+                // Run ECR login
+                $ecrLogin = `echo $dockerPassword | docker login -u AWS --password-stdin $repositoryBase`;
+
+                // Ensure that the ECR repository exists for this app
+                // Describe the repositories on the account
+                $repositories = json_decode(`aws ecr describe-repositories`);
+                if ($repositories === NULL) {
+                    echo "💥💥💥 Error getting ECR repositories. This could be an AWS or an IAM issue. 💥💥💥\n";
+                    exit(1);
+                }
+                
+                // See if any of the names match
+                $repositoryExists = FALSE;
+                foreach ($repositories->repositories as $key => $repository) {
+                    if ($repository->repositoryName === $app) {
+                        $repositoryExists = TRUE;
+                    }
+                }
+
+                // Doesn't exist, create it
+                if ($repositoryExists === FALSE) {
+                    $createRepository = `aws ecr create-repository --repository-name $app`;
+                }
+
+                $repositoryBase = str_replace('https://', '', $repositoryBase);
+
+                break;
+            
+            case 'gcp':
+                # code...
+                break;
+        }
+
+        $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
         $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag);
     }
 }
@@ -354,7 +397,6 @@ class Create extends Command
         {--branch= : The name of the app branch}
         {--environment= : The name of the environment}
         {--build= : The number of the build}
-        {--repository= : The docker repository to use}
         {--cloud-provider=aws : Either aws or gcp}
         {--no-docker-build : Skips Docker build if set}';
 
@@ -441,7 +483,7 @@ class Create extends Command
                 $this->option('branch'),
                 $this->option('build'),
                 $taskSpooler,
-                $this->option('repository')
+                $this->option('cloud-provider')
             );
         }
 
