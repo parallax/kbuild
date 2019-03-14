@@ -10,9 +10,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Miloske85\php_cli_table\Table as CliTable;
 use DateTime;
 use Exception;
+use Symfony\Component\Yaml\Yaml;
 
 /*
-php ~/Code/kbuild/kbuild create --app=hiya --branch=master --environment=qa --build=6 --aws-vpc=vpc-0779d109017c7cf60 --rds-sg=sg-03b42e737045975a3 --rds-subnet-group=kops-rds
+php ~/Code/kbuild/kbuild create --app=hiya --branch=master --environment=qa --build=6 --settings=/etc/parallax/settings.yaml
 */
 
 class TaskSpoolerInstance
@@ -187,6 +188,10 @@ class TaskSpoolerInstance
 
         if(!isset($endTime)) {
             $endTime = new DateTime();
+        }
+
+        if(!isset($startTime)) {
+            $startTime = new DateTime();
         }
 
         $interval = date_diff($startTime, $endTime);
@@ -425,7 +430,7 @@ class Create extends Command
      *
      * @var string
      */
-    protected $signature = 'create 
+    protected $signature = 'build 
         {--kubeconfig=~/.kube/config : The path to the kubeconfig file}
         {--app= : The name of the app}
         {--branch= : The name of the app branch}
@@ -434,10 +439,10 @@ class Create extends Command
         {--cloud-provider=aws : Either aws or gcp}
         {--no-docker-build : Skips Docker build if set}
         {--aws-vpc= : The VPC to use. Only used when cloud-provider is set to aws}
-        {--rds-sg= : The security group to use for RDS instances}
-        {--rds-subnet-group= : The RDS subnet group to use for RDS instances}
         {--db-pause=60 : The amount of time in minutes to pause an Aurora instance after no activity}
-        {--db-per-branch : Whether to use one database per branch}';
+        {--db-per-branch : Whether to use one database per branch}
+        {--use-own-db-server : Whether to use a server explicitly spun up for this app}
+        {--settings=/etc/parallax/settings.yaml : The settings.yaml file to use}';
 
     /**
      * The description of the command.
@@ -454,6 +459,9 @@ class Create extends Command
     public function handle()
     {
 
+        // Load in settings
+        $this->settings = Yaml::parseFile($this->option('settings'));
+
         // Check that options have been passed
         $toCheck = array('app', 'branch', 'build', 'environment');
         foreach ($toCheck as $key => $option) {
@@ -466,7 +474,7 @@ class Create extends Command
         // Check platform-specific options
         switch ($this->option('cloud-provider')) {
             case 'aws':
-                $toCheck = array('aws-vpc', 'rds-sg', 'db-pause', 'rds-subnet-group');
+                $toCheck = array();
                 foreach ($toCheck as $key => $option) {
                     if(null === $this->option($option)) {
                         echo "You need to pass a value for --$option when using " . $this->option('cloud-provider') . " as a cloud provider\n";
@@ -540,25 +548,24 @@ class Create extends Command
             $dockerFiles->buildAndPush();
         }
 
-        // MySQL
-        $mysql = new MySQLProvisioner(
-            array(
-                'app'           =>  $this->option('app'),
-                'branch'        =>  $this->option('branch'),
-                'taskSpooler'   =>  $taskSpooler,
-                'cloudProvider' =>  $this->option('cloud-provider'),
-                'dbPerBranch'   =>  $this->option('db-per-branch'),
-                'pause'         =>  $this->option('db-pause'),
-                'environment'   =>  $this->option('environment'),
-                'rds-sg'        =>  $this->option('rds-sg'),
-                'aws-vpc'       =>  $this->option('aws-vpc'),
-                'rds-subnet-group'  => $this->option('rds-subnet-group')
-            )
-        );
+        // Configure the namespace first as subsequent steps depend on it
+        $createNamespace = $taskSpooler->addJob('Create Namespace', "php ~/Code/kbuild/kbuild create:namespace --namespace='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'");
 
-        $mysql->declare();
+
+        // Add a job to handle MySQL
+        // Check if app uses own-db-server
+        $additional = '';
+        if ($this->option('use-own-db-server') !== FALSE) {
+            $additional .= ' --use-own-db-server';
+        }
+        if ($this->option('db-per-branch') !== FALSE) {
+            $additional .= ' --db-per-branch';
+        }
+        $taskSpooler->addJob('MySQL', "php ~/Code/kbuild/kbuild create:mysql --cloud-provider='" . $this->option('cloud-provider') . "' --app=" . $this->option('app') . " --branch=" . $this->option('branch') . " --environment=" . $this->option('environment') . " --settings=" . $this->option('settings') . " --kubeconfig=" . $this->option('kubeconfig') . " --db-pause=" . $this->option('db-pause') . $additional, $createNamespace);
 
         $taskSpooler->wait();
+
+        print_r($taskSpooler);
 
     }
 

@@ -21,6 +21,7 @@
         "laravel-zero/framework": "5.8.*",
         "miloske85/php-cli-table": "^0.2.1",
         "spatie/async": "^0.0.4",
+        "symfony/yaml": "^4.2",
         "zendframework/zend-text": "^2.7"
     },
     "require-dev": {

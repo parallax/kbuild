@@ -197,7 +197,7 @@ class Build extends Command
      *
      * @var string
      */
-    protected $signature = 'build 
+    protected $signature = 'sfgdfhg 
         {master : The url for the kubernetes api}
         {client-certificate-data : Client certificate}
         {client-key-data : Client key}
