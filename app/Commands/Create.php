@@ -436,7 +436,7 @@ class Create extends Command
         {--aws-vpc= : The VPC to use. Only used when cloud-provider is set to aws}
         {--rds-sg= : The security group to use for RDS instances}
         {--rds-subnet-group= : The RDS subnet group to use for RDS instances}
-        {--db-pause= : The amount of time in minutes to pause an Aurora instance after no activity}
+        {--db-pause=60 : The amount of time in minutes to pause an Aurora instance after no activity}
         {--db-per-branch : Whether to use one database per branch}';
 
     /**
