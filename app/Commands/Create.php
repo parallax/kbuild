@@ -541,7 +541,6 @@ class Create extends Command
         }
 
         // MySQL
-
         $mysql = new MySQLProvisioner(
             array(
                 'app'           =>  $this->option('app'),

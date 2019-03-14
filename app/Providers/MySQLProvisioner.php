@@ -21,6 +21,7 @@ class MySQLProvisioner {
         $this->rdsSg = $args['rds-sg'];
         $this->awsVpc = $args['aws-vpc'];
         $this->rdsSubnetGroup = $args['rds-subnet-group'];
+        $this->salt = $args['salt'];
     }
 
     public function declare() {
