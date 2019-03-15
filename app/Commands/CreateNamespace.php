@@ -59,8 +59,6 @@ class CreateNamespace extends Command
             exit(1);
         }
 
-        
-
     }
 
     /**

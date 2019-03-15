@@ -492,6 +492,13 @@ class Create extends Command
         $buildDirectory = getcwd();
         $this->info("Building from $buildDirectory");
 
+        // Load in kbuild yaml
+        if (file_exists($buildDirectory . '/k8s/kbuild.yaml')) {
+            $this->kbuild = Yaml::parseFile($buildDirectory . '/k8s/kbuild.yaml');
+        }
+
+        dd($this->kbuild);
+
         // Easy to understand version of --no-docker-build
         if ($this->option('no-docker-build') == TRUE) {
             $dockerBuild = 'No';
