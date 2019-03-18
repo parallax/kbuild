@@ -37,7 +37,6 @@ class Create extends Command
         {--build= : The number of the build}
         {--cloud-provider=aws : Either aws or gcp}
         {--no-docker-build : Skips Docker build if set}
-        {--aws-vpc= : The VPC to use. Only used when cloud-provider is set to aws}
         {--db-pause=60 : The amount of time in minutes to pause an Aurora instance after no activity}
         {--db-per-branch : Whether to use one database per branch}
         {--use-own-db-server : Whether to use a server explicitly spun up for this app}
@@ -67,7 +66,7 @@ class Create extends Command
             $this->kbuild = Yaml::parseFile($buildDirectory . '/k8s/kbuild.yaml');
         }
 
-        dd($this->kbuild);
+        //dd($this->kbuild);
 
         // Load in settings
         $this->settings = Yaml::parseFile($this->option('settings'));
@@ -141,7 +140,8 @@ class Create extends Command
                 'branch'        =>  $this->option('branch'),
                 'build'         =>  $this->option('build'),
                 'taskSpooler'   =>  $taskSpooler,
-                'cloudProvider' =>  $this->option('cloud-provider')
+                'cloudProvider' =>  $this->option('cloud-provider'),
+                'settings'      =>  $this->settings
             )
         );
 
@@ -156,7 +156,6 @@ class Create extends Command
 
         // Configure the namespace first as subsequent steps depend on it
         $createNamespace = $taskSpooler->addJob('Create Namespace', "php ~/Code/kbuild/kbuild create:namespace --namespace='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'");
-
 
         // Add a job to handle MySQL
         // Check if app uses own-db-server

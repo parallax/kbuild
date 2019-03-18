@@ -17,6 +17,7 @@
     ],
     "require": {
         "php": "^7.1.3",
+        "aws/aws-sdk-php": "^3.90",
         "kubernetes/php-client": "^1.13",
         "laravel-zero/framework": "5.8.*",
         "miloske85/php-cli-table": "^0.2.1",

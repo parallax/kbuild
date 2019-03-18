@@ -11,6 +11,8 @@ use Miloske85\php_cli_table\Table as CliTable;
 use DateTime;
 use Exception;
 use Symfony\Component\Yaml\Yaml;
+use Aws\Rds\RdsClient;  
+use Aws\Exception\AwsException;
 
 class MySQL extends Command
 {
@@ -50,7 +52,14 @@ class MySQL extends Command
         // Load in settings
         $this->settings = Yaml::parseFile($this->option('settings'));
 
-        //dd($this->settings);
+        $rdsClient = new RdsClient([
+            'region' => $this->settings['aws']['region'],
+            'version' => '2014-10-31',
+            'credentials' => [
+                'key'    => $this->settings['aws']['awsAccessKeyId'],
+                'secret' => $this->settings['aws']['awsSecretAccessKey'],
+            ],
+        ]);
 
         switch ($this->option('cloud-provider')) {
             case 'aws':
@@ -69,23 +78,20 @@ class MySQL extends Command
                     $this->info($this->option('app') . ' uses shared db server');
                 }
 
-                // Check whether the database exists. Set to null if it doesn't exist.
-                $existingServer = json_decode(`aws rds describe-db-clusters --db-cluster-id=$serverName`);
+                $serverExists = false;
 
-                if ($existingServer === NULL) {
+                try {
+                    $existingServer = $rdsClient->describeDBClusters([
+                        'DBClusterIdentifier' => $serverName,
+                    ]);
+                    $serverExists = true;
+                } catch (AwsException $e) {
+                    $this->info($serverName . ' not in account');
+                }
+
+                if ($serverExists === false) {
 
                     $this->info($serverName . ' does not exist, creating');
-
-                    // Grab the availability zones from settings
-                    $availabilityZones = '';
-                    foreach ($this->settings['aws']['availabilityZones'] as $key => $availabilityZone) {
-                        $availabilityZones .= '"' . $availabilityZone . '" ';
-                    }
-
-                    // And the VPC security group id
-                    $vpcSecurityGroupId = $this->settings['aws']['rdsSecurityGroup'];
-
-                    $dbSubnetGroupName = $this->settings['aws']['rdsSubnetGroup'];
 
                     $SecondsUntilAutoPause = $this->option('db-pause') * 60;
 
@@ -94,23 +100,44 @@ class MySQL extends Command
                     $this->info('Master Username: ' . 'master');
                     $this->info('Master Password: ' . $masterPassword);
 
-                    // Server doesn't exist. Let's create the server and wait for it to be live:
-                    $dbStatus = `aws rds create-db-cluster --availability-zones $availabilityZones --backup-retention-period=35 --db-cluster-identifier=$serverName --vpc-security-group-ids=$vpcSecurityGroupId --engine=aurora --master-username=master --master-user-password=$masterPassword --db-subnet-group-name=$dbSubnetGroupName --storage-encrypted --engine-mode=serverless --scaling-configuration='MinCapacity=2,MaxCapacity=256,AutoPause=true,SecondsUntilAutoPause=$SecondsUntilAutoPause'`;
-
-                    if (json_decode($dbStatus, TRUE) === NULL) {
-                        echo "Something has gone wrong while creating database server $serverName\n";
+                    try {
+                        $result = $rdsClient->createDBCluster([
+                            'AvailabilityZones' => $this->settings['aws']['availabilityZones'],
+                            'BackupRetentionPeriod' => 35,
+                            'DBClusterIdentifier' => $serverName,
+                            'DBSubnetGroupName' => $this->settings['aws']['rdsSubnetGroup'],
+                            'Engine' => 'aurora', // REQUIRED
+                            'EngineMode' => 'serverless',
+                            'MasterUserPassword' => $masterPassword,
+                            'MasterUsername' => 'master',
+                            'ScalingConfiguration' => [
+                                'AutoPause' => true,
+                                'MaxCapacity' => 256,
+                                'MinCapacity' => 2,
+                                'SecondsUntilAutoPause' => $SecondsUntilAutoPause,
+                            ],
+                            'StorageEncrypted' => true,
+                            'VpcSecurityGroupIds' => $this->settings['aws']['rdsSecurityGroups'],
+                        ]);
+                    } catch (AwsException $e) {
+                        // output error message if fails
+                        $this->error('Error creating RDS ' . $serverName);
+                        echo $e->getMessage();
+                        echo "\n";
                         exit(1);
                     }
 
-                    $dbStatus = `aws rds describe-db-clusters --db-cluster-id=$serverName`;
-                    $dbStatus = json_decode($dbStatus, TRUE);
+                    $dbStatus = $rdsClient->describeDBClusters([
+                        'DBClusterIdentifier' => $serverName,
+                    ]);
 
                     $waitingSeconds = 1;
 
                     while ($dbStatus['DBClusters'][0]['Status'] !== 'available') {
 
-                        $dbStatus = `aws rds describe-db-clusters --db-cluster-id=$serverName`;
-                        $dbStatus = json_decode($dbStatus, TRUE);
+                        $dbStatus = $rdsClient->describeDBClusters([
+                            'DBClusterIdentifier' => $serverName,
+                        ]);
                         $this->info('Waiting ' . $waitingSeconds . ' seconds. ' . $serverName . ' ' . $dbStatus['DBClusters'][0]['Status']);
                         $waitingSeconds = $waitingSeconds + 1;
                         sleep(1);
@@ -118,17 +145,20 @@ class MySQL extends Command
 
                     // Db server has been created
                     // Sleep for 60 seconds to wait for DNS resolution to work
-                    $waitFor = 60;
+                    $waitFor = 30;
                     while($waitFor > 0) {
-                        $this->info('Waiting for ' . $waitFor . ' seconds for AWS DNS resolution to work');
+                        $this->info('Waiting ' . $waitFor . ' seconds for AWS DNS resolution to work');
                         sleep(1);
                         $waitFor = $waitFor - 1;
                     }
                     $this->info('Finished waiting for DNS');
+                    $existingServer = $rdsClient->describeDBClusters([
+                        'DBClusterIdentifier' => $serverName,
+                    ]);
                 }
 
                 // Get the endpoint of the database
-                $databaseEndpoint = json_decode(`aws rds describe-db-clusters --db-cluster-id=$serverName`, TRUE)['DBClusters'][0]['Endpoint'];
+                $databaseEndpoint = $existingServer['DBClusters'][0]['Endpoint'];
 
                 break;
             

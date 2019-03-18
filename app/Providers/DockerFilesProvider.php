@@ -23,6 +23,7 @@ class DockerFiles {
     protected $build;
     protected $taskSpooler;
     protected $cloudProvider;
+    protected $kbuild;
 
     public function __construct($args) {
         $this->buildDirectory = $args['buildDirectory'];
@@ -34,6 +35,7 @@ class DockerFiles {
         $this->build = $args['build'];
         $this->taskSpooler = $args['taskSpooler'];
         $this->cloudProvider = $args['cloudProvider'];
+        $this->settings = $args['settings'];
     }
 
     public function noFiles() {
@@ -80,7 +82,10 @@ class DockerFiles {
         switch ($this->cloudProvider) {
             case 'aws':
 
-                $dockerLogin = `aws ecr get-login --no-include-email`;
+                $awsAccessKeyId = $this->settings['aws']['awsAccessKeyId'];
+                $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
+
+                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --no-include-email`;
                 preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
                 $repositoryBase = str_replace('https://', '', $repositoryBase[1]);
 
@@ -122,7 +127,10 @@ class DockerFiles {
             switch ($provider) {
                 case 'aws':
     
-                    $dockerLogin = `aws ecr get-login --no-include-email`;
+                    $awsAccessKeyId = $this->settings['aws']['awsAccessKeyId'];
+                    $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
+
+                    $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --no-include-email`;
                     preg_match('/-p (.*=)/', $dockerLogin, $dockerPassword);
                     $dockerPassword = $dockerPassword[1];
                     preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
@@ -133,7 +141,7 @@ class DockerFiles {
     
                     // Ensure that the ECR repository exists for this app
                     // Describe the repositories on the account
-                    $repositories = json_decode(`aws ecr describe-repositories`);
+                    $repositories = json_decode(`export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr describe-repositories`);
                     if ($repositories === NULL) {
                         echo "💥💥💥 Error getting ECR repositories. This could be an AWS or an IAM issue. 💥💥💥\n";
                         exit(1);
@@ -149,7 +157,7 @@ class DockerFiles {
     
                     // Doesn't exist, create it
                     if ($repositoryExists === FALSE) {
-                        $createRepository = `aws ecr create-repository --repository-name $app`;
+                        $createRepository = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr create-repository --repository-name $app`;
                     }
     
                     $repositoryBase = str_replace('https://', '', $repositoryBase);
