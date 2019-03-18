@@ -67,13 +67,14 @@ class Create extends Command
             $kbuild = file_get_contents($buildDirectory . '/k8s/kbuild.yaml');
             $kbuild = str_replace('{{ app }}', $this->option('app'), $kbuild);
             $kbuild = str_replace('{{ environment }}', $this->option('environment'), $kbuild);
+            $kbuild = str_replace('{{ namespace }}', $this->option('app') . '-' . $this->option('environment'), $kbuild);
             $kbuild = str_replace('{{ branch }}', $this->option('branch'), $kbuild);
             $kbuild = str_replace('{{ build }}', $this->option('build'), $kbuild);
             $this->kbuild = Yaml::parse($kbuild);
             unset($kbuild);
         }
 
-        //dd($this->kbuild);
+        dd($this->kbuild);
 
         // Load in settings
         $this->settings = Yaml::parseFile($this->option('settings'));
