@@ -131,7 +131,7 @@ class DockerFiles {
                     $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
 
                     $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --no-include-email`;
-                    preg_match('/-p (.*=)/', $dockerLogin, $dockerPassword);
+                    preg_match('/-p (.*\ )/', $dockerLogin, $dockerPassword);
                     $dockerPassword = $dockerPassword[1];
                     preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
                     $repositoryBase = $repositoryBase[1];
@@ -170,7 +170,7 @@ class DockerFiles {
             }
     
             $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
-            $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag);
+            $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
     
             return $repositoryBase;
         }

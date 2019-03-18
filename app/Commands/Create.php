@@ -63,7 +63,14 @@ class Create extends Command
 
         // Load in kbuild yaml
         if (file_exists($buildDirectory . '/k8s/kbuild.yaml')) {
-            $this->kbuild = Yaml::parseFile($buildDirectory . '/k8s/kbuild.yaml');
+            // Do a find and replace on some bits
+            $kbuild = file_get_contents($buildDirectory . '/k8s/kbuild.yaml');
+            $kbuild = str_replace('{{ app }}', $this->option('app'), $kbuild);
+            $kbuild = str_replace('{{ environment }}', $this->option('environment'), $kbuild);
+            $kbuild = str_replace('{{ branch }}', $this->option('branch'), $kbuild);
+            $kbuild = str_replace('{{ build }}', $this->option('build'), $kbuild);
+            $this->kbuild = Yaml::parse($kbuild);
+            unset($kbuild);
         }
 
         //dd($this->kbuild);
@@ -127,7 +134,24 @@ class Create extends Command
             ]
         );
 
+
+
         unset($dockerBuild);
+
+        $this->info("Provisioning the following S3 buckets (after replacing placeholders):");
+        $buckets = array();
+        foreach ($this->kbuild['aws']['s3'] as $key => $bucket) {
+            array_push($buckets, array($bucket));
+        }
+        $this->table(
+            // Headers
+            [
+                'S3 Bucket',
+            ],
+            $buckets
+        );
+
+        unset($buckets);
 
         // Initialise the taskspooler
         $taskSpooler = new TaskSpoolerInstance();
@@ -167,6 +191,17 @@ class Create extends Command
             $additional .= ' --db-per-branch';
         }
         $taskSpooler->addJob('MySQL', "php ~/Code/kbuild/kbuild create:mysql --cloud-provider='" . $this->option('cloud-provider') . "' --app=" . $this->option('app') . " --branch=" . $this->option('branch') . " --environment=" . $this->option('environment') . " --settings=" . $this->option('settings') . " --kubeconfig=" . $this->option('kubeconfig') . " --db-pause=" . $this->option('db-pause') . $additional, $createNamespace);
+
+        // IAM and Object Storage
+        // If AWS account id is provided, sort an IAM user and buckets
+        if (isset($this->settings['aws']['accountId'])) {
+            $createIam = $taskSpooler->addJob('IAM User', "php ~/Code/kbuild/kbuild create:iam --iam-account='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'" . " --namespace='" . $this->option('app') . '-' . $this->option('environment') . "'", $createNamespace);
+
+            // For each S3 bucket requested in kbuild.yaml add a creation job
+            foreach ($this->kbuild['aws']['s3'] as $key => $bucket) {
+                $taskSpooler->addJob('S3 Bucket ' . $bucket, "php ~/Code/kbuild/kbuild create:s3bucket --iam-grantee='" . $this->option('app') . '-' . $this->option('environment') . "' --settings='" . $this->option('settings') . "'" . " --bucket-name='" . $bucket . "'", $createIam);
+            }
+        }
 
         $taskSpooler->wait();
 

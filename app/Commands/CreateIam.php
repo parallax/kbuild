@@ -11,7 +11,7 @@ use Miloske85\php_cli_table\Table as CliTable;
 use DateTime;
 use Exception;
 use Symfony\Component\Yaml\Yaml;
-use Aws\S3\S3Client;  
+use Aws\Iam\IamClient;  
 use Aws\Exception\AwsException;
 
 class CreateIam extends Command
@@ -23,7 +23,9 @@ class CreateIam extends Command
      */
     protected $signature = 'create:iam 
         {--iam-account= : The iam user to create/ensure exists}
-        {--settings= : The settings.yaml file to use}';
+        {--settings= : The settings.yaml file to use}
+        {--namespace= : The Kubernetes namespace to use for secrets}
+        {--kubeconfig= : The path to the kubeconfig file}';
 
     /**
      * The description of the command.
@@ -43,68 +45,87 @@ class CreateIam extends Command
         // Our function
         // Load in settings
         $this->settings = Yaml::parseFile($this->option('settings'));
+        $kubeconfig = $this->option('kubeconfig');
+        $kubernetesNamespace = $this->option('namespace');
 
-        $s3Client = new S3Client([
+        $iamClient = new IamClient([
             'region' => $this->settings['aws']['region'],
-            'version' => '2006-03-01',
+            'version' => '2010-05-08',
             'credentials' => [
                 'key'    => $this->settings['aws']['awsAccessKeyId'],
                 'secret' => $this->settings['aws']['awsSecretAccessKey'],
             ],
         ]);
 
-        // Check if the bucket already exists in our account
-        $buckets = $s3Client->listBuckets();
-
-        $bucketExists = false;
-
-        foreach ($buckets['Buckets'] as $bucket) {
-            if ($bucket['Name'] === $this->option('bucket-name')) {
-                $this->info('Bucket ' . $this->option('bucket-name') . ' exists already');
-                $bucketExists = true;
-                print_r($bucket);
-            }
-
+        // Check if the IAM account already exists in our account
+        try {
+            $result = $iamClient->getUser([
+                'UserName' => $this->option('iam-account'),
+            ]);
+            $accountExists = true;
+            $this->info('IAM Account ' . $this->option('iam-account') . ' exists in account');
+        } catch (AwsException $e) {
+            $accountExists = false;
+            $this->info('IAM Account ' . $this->option('iam-account') . ' does not exist, creating it');
         }
 
-        // Check if bucket exists
-        if ($bucketExists === false) {
-            $this->info('Bucket ' . $this->option('bucket-name') . ' not in account, creating it');
+        // Check if account exists
+        if ($accountExists === false) {
             try {
-                $result = $s3Client->createBucket([
-                    'Bucket' => $this->option('bucket-name'),
-                    'CreateBucketConfiguration' => [
-                        'LocationConstraint' => $this->settings['aws']['region'],
-                    ],
-                    'ServerSideEncryption' => 'aws:kms'
+                $result = $iamClient->createUser([
+                    'UserName' => $this->option('iam-account')
                 ]);
             } catch (AwsException $e) {
                 // output error message if fails
-                $this->error('Bucket ' . $this->option('bucket-name') . ' could not be created');
+                $this->error('IAM Account ' . $this->option('iam-account') . ' could not be created');
                 echo $e->getMessage();
                 echo "\n";
                 exit(1);
             }
 
-            $this->info('Created bucket ' . $this->option('bucket-name'));
+            $this->info('Created IAM Account ' . $this->option('iam-account'));
+        }
 
-            // Enable versioning on the bucket
-            try {
-                $result = $s3Client->putBucketVersioning([
-                    'Bucket' => $this->option('bucket-name'),
-                    'VersioningConfiguration' => [
-                        'Status' => 'Enabled',
-                    ],
-                ]);
-            } catch  (AwsException $e) {
-                // output error message if fails
-                $this->error('Bucket ' . $this->option('bucket-name') . ' could not enable versioning');
-                echo $e->getMessage();
-                echo "\n";
+        // Get access key for user from Kubernetes
+        $kubernetesAccessKey = json_decode(`kubectl --kubeconfig=$kubeconfig -n $kubernetesNamespace get secret aws-credentials -o json`, TRUE);
+
+        if ($kubernetesAccessKey === null) {
+            // Secret doesn't exist in Kubernetes
+            $this->info('No aws-credentials secret in namespace ' . $this->option('namespace'));
+            $result = $iamClient->createAccessKey([
+                'UserName' => $this->option('iam-account'),
+            ]);
+
+            $this->info('Created access key ' . $result['AccessKey']['AccessKeyId']);
+
+            // Apply the secret:
+            $yamlArray = array(
+                'apiVersion'    => 'v1',
+                'kind'          => 'Secret',
+                'metadata'      => array(
+                    'name'          => 'aws-credentials',
+                    'namespace'     => $this->option('namespace'),
+                ),
+                'type'          => 'Opaque',
+                'stringData'    => array(
+                    'AccessKeyId'      => $result['AccessKey']['AccessKeyId'],
+                    'SecretAccessKey'  => $result['AccessKey']['SecretAccessKey']
+                )
+            );
+    
+            $command = "cat <<EOF | kubectl --kubeconfig=" . $this->option('kubeconfig') . " apply -f -\n" . Yaml::dump($yamlArray) . "\nEOF";
+    
+            system($command, $exit);
+            if ($exit !== 0) {
+                echo "Error creating aws-credentials secret\n";
                 exit(1);
             }
 
-            $this->info('Enabled versioning on bucket ' . $this->option('bucket-name'));
+            $this->info('Created secret aws-credentials with AccessKeyId ' . $result['AccessKey']['AccessKeyId']);
+        }
+
+        else {
+            $this->info('Secret ' . $this->option('namespace') . '/aws-credentials exists with AccessKeyId ' . base64_decode($kubernetesAccessKey['data']['AccessKeyId']));
         }
     }
 

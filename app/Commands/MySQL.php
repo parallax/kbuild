@@ -203,7 +203,7 @@ class MySQL extends Command
 
         system($command, $exit);
         if ($exit !== 0) {
-            echo "Error creating mysqlCredentials secret\n";
+            echo "Error creating mysql-credentials secret\n";
             exit(1);
         }
 
