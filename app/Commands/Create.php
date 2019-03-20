@@ -13,6 +13,7 @@ use Exception;
 use Symfony\Component\Yaml\Yaml;
 use App\Providers\TaskSpoolerInstance;
 use App\Providers\DockerFiles;
+use App\Providers\YamlFiles;
 
 /*
 php ~/Code/kbuild/kbuild build --app=hiya --branch=master --environment=qa --build=6 --settings=/etc/parallax/settings.yaml
@@ -74,7 +75,9 @@ class Create extends Command
             unset($kbuild);
         }
 
-        dd($this->kbuild);
+        else {
+            $this->kbuild = null;
+        }
 
         // Load in settings
         $this->settings = Yaml::parseFile($this->option('settings'));
@@ -206,8 +209,17 @@ class Create extends Command
 
         $taskSpooler->wait();
 
-        print_r($taskSpooler);
-
+        $yamlFiles = new YamlFiles(
+            array(
+                'yamlDirectory' => $buildDirectory . '/k8s/yaml',
+                'app'           => $this->option('app'),
+                'branch'        => $this->option('branch'),
+                'build'         => $this->option('build'),
+                'environment'   => $this->option('environment'),
+                'images'        => $dockerFiles->imageTags,
+                'kbuild'        => $this->kbuild
+            )
+        );
     }
 
     /**

@@ -24,6 +24,7 @@ class DockerFiles {
     protected $taskSpooler;
     protected $cloudProvider;
     protected $kbuild;
+    public $imageTags;
 
     public function __construct($args) {
         $this->buildDirectory = $args['buildDirectory'];
@@ -36,6 +37,7 @@ class DockerFiles {
         $this->taskSpooler = $args['taskSpooler'];
         $this->cloudProvider = $args['cloudProvider'];
         $this->settings = $args['settings'];
+        $this->imageTags = array();
     }
 
     public function noFiles() {
@@ -58,6 +60,10 @@ class DockerFiles {
         }
 
         return $dockerFiles;
+    }
+
+    public function getImageTags() {
+        return $this->imageTags;
     }
 
     public function asTableArray() {
@@ -168,8 +174,9 @@ class DockerFiles {
                     # code...
                     break;
             }
-    
+
             $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
+            $this->imageTags[$dockerFile] = $tag;
             $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
     
             return $repositoryBase;
