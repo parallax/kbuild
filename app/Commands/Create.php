@@ -278,6 +278,8 @@ class Create extends Command
 
         echo "Aaaaand done\n";
 
+        exit(0);
+
     }
 
     /**
