@@ -274,7 +274,7 @@ class Create extends Command
 
         $taskSpooler->wait();
 
-        exit;
+        $taskSpooler->wait();
 
     }
 

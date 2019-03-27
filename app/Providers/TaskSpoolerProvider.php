@@ -238,7 +238,7 @@ class TaskSpoolerInstance
             $this->getJobs();
             $done = true;
 
-            print_r($this->jobs);
+            print_r($this->dependencies);
 
             foreach ($this->dependencies as $jobId => $job) {
                 // Filter for ones that are level 0:
