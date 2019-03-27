@@ -61,6 +61,10 @@ class TaskSpoolerInstance
         $this->repositoryBase = '';
     }
 
+    public function kill() {
+        shell_exec($this->export . 'tsp -K');
+    }
+
     public function addJob($name, $command, $dependency = NULL) {
 
         if ($dependency !== NULL) {
@@ -255,7 +259,7 @@ class TaskSpoolerInstance
             }
 
             $table = new CliTable($this->tableData, $headers);
-            
+
             echo $table->getTable();
 
         }

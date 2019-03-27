@@ -276,6 +276,8 @@ class Create extends Command
 
         $taskSpooler->wait();
 
+        $taskSpooler->kill();
+
         echo "Aaaaand done\n";
 
         exit(0);
