@@ -241,7 +241,6 @@ class TaskSpoolerInstance
             foreach ($this->dependencies as $jobId => $job) {
                 // Filter for ones that are level 0:
                 if ($job['level'] === 0) {
-                    echo "stuck";
                     $this->dependencyIterator($job);
                 }
 
@@ -254,6 +253,8 @@ class TaskSpoolerInstance
                     exit(1);
                 }
             }
+
+            echo $done;
 
             $table = new CliTable($this->tableData, $headers);
             echo $table->getTable();
