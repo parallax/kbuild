@@ -92,7 +92,7 @@ class DockerFiles {
                 $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
                 $awsRegion = $this->settings['aws']['region'];
 
-                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --region= --no-include-email`;
+                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --region=$awsRegion --no-include-email`;
                 preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
                 $repositoryBase = str_replace('https://', '', $repositoryBase[1]);
 
@@ -136,8 +136,9 @@ class DockerFiles {
     
                     $awsAccessKeyId = $this->settings['aws']['awsAccessKeyId'];
                     $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
+                    $awsRegion = $this->settings['aws']['region'];
 
-                    $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --no-include-email`;
+                    $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --region=$awsRegion --no-include-email`;
                     preg_match('/-p (.*\ )/', $dockerLogin, $dockerPassword);
                     $dockerPassword = $dockerPassword[1];
                     preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
@@ -148,7 +149,7 @@ class DockerFiles {
     
                     // Ensure that the ECR repository exists for this app
                     // Describe the repositories on the account
-                    $repositories = json_decode(`export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr describe-repositories`);
+                    $repositories = json_decode(`export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr describe-repositories --region=$awsRegion`);
                     if ($repositories === NULL) {
                         echo "💥💥💥 Error getting ECR repositories. This could be an AWS or an IAM issue. 💥💥💥\n";
                         exit(1);
