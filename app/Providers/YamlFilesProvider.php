@@ -22,7 +22,9 @@ class YamlFiles {
     protected $images;
     protected $yamlFileContents;
     protected $parsedYamlContents;
+    protected $returnYamlContents;
     protected $kbuild;
+    protected $environmentVariables;
 
     public function __construct($args) {
         $this->yamlDirectory = $args['yamlDirectory'];
@@ -36,6 +38,9 @@ class YamlFiles {
         $this->images = $args['images'];
         $this->kbuild = $args['kbuild'];
         $this->settings['namespace'] = $args['app'] . '-' . $args['environment'];
+        $this->taskSpooler = $args['taskSpooler'];
+        $this->kubeconfig = $args['kubeconfig'];
+        $this->environmentVariables = $args['environmentVariables'];
 
         $yamlFiles = scandir($this->yamlDirectory);
         $this->yamlFiles = $yamlFiles;
@@ -61,7 +66,7 @@ class YamlFiles {
             }
         }
 
-        // Read each $this->yamlFileContents and extract the apiVersions so we can attempt to order them
+        // Read each $this->yamlFileContents and extract the kind so we can attempt to order them
         foreach ($this->yamlFileContents as $key => $contents) {
             $repeat = 'false';
             $contents = $this->findAndReplace($contents);
@@ -83,9 +88,23 @@ class YamlFiles {
                 }
             }   
 
+            // Check if this has extra metadata in it
             $contentsArray = Yaml::parse($contents);
 
-            // Check if this has extra metadata in it
+            // If this is a deployment then add environment variables to it
+            if ($contentsArray['kind'] === 'Deployment') {
+                foreach ($contentsArray['spec']['template']['spec']['containers'] as $containerKey => $container) {
+                    if (!isset($container['env'])) {
+                        $contentsArray['spec']['template']['spec']['containers'][$containerKey]['env'] = array();
+                    }
+
+                    // Now push in the vars
+                    foreach ($this->environmentVariables as $environmentKey => $environmentValue) {
+                        array_push($contentsArray['spec']['template']['spec']['containers'][$containerKey]['env'],  array('name' => $environmentKey, 'value' => $environmentValue));
+                    }
+                }
+                $contents = Yaml::dump($contentsArray, 50);
+            }
 
             if (isset($contentsArray['repeat'])) {
                 $repeat = $contentsArray['repeat'];
@@ -96,21 +115,39 @@ class YamlFiles {
 
                     // Repeater on domain
                     if ($repeat === 'eachDomain') {
+                        $domains = array();
                         foreach ($this->kbuild['domains'] as $key => $domain) {
 
-                            // Todo: find all of the instances of {{ domain }} and handle filtering by branch, environment etc
-                            preg_match_all('/{{ domain.* }}/', $contents, $domainReplacement, PREG_PATTERN_ORDER);
+                            // If this domain's settings match this build...
+                            if ($domain['environments'] === '*' || $domain['environments'] === $this->settings['environment']) {
+                                if ($domain['branches'] === '*' || $domain['branches'] === $this->settings['branch']) {
+                                    array_push($domains, $this->findAndReplace($domain['domain']));
+                                }
+                            }                            
+                        }
 
-                            
+                        // For each of the domains that are relevant to this build, push the file
+                        foreach ($domains as $key => $domain) {
+
+                            $contentsToParse = str_replace('{{ domain }}', $domain, $contents);
+                            $contentsToParse = str_replace('{{ domain_md5 }}', hash('md5', $domain), $contentsToParse);
+                            $contentsArray = Yaml::parse($contentsToParse);
+                            unset($contentsArray['repeat']);
+                            array_push($this->parsedYamlContents, array(
+                                'kind'    => $contentsArray['kind'],
+                                'repeat'        => $repeat,
+                                'file'          => Yaml::dump($contentsArray, 50),
+                            ));
                         }
                     }
                 }
-
             }
 
             else {
+                $repeat = null;
+                $contentsArray = Yaml::parse($contents);
                 array_push($this->parsedYamlContents, array(
-                    'apiVersion'    => $contentsArray['apiVersion'],
+                    'kind'    => $contentsArray['kind'],
                     'repeat'        => $repeat,
                     'file'          => Yaml::dump($contentsArray, 50),
                 ));
@@ -118,11 +155,50 @@ class YamlFiles {
 
         }
 
-        dd($this->parsedYamlContents);
     }
 
     public function count () {
         return count($this->yamlFileContents);
+    }
+
+    public function getFiles () {
+
+        $this->returnYamlContents = array();
+
+        // Push bits in as they come
+        $this->returnKinds($this->parsedYamlContents, 'Deployment');
+        $this->returnKinds($this->parsedYamlContents, 'Ingress');
+        $this->returnKinds($this->parsedYamlContents, 'Certificate');
+        $this->returnKinds($this->parsedYamlContents, 'Service');
+
+        return $this->returnYamlContents;
+    }
+
+    public function queue($kind) {
+        $this->returnYamlContents = array();
+        $this->returnKinds($this->parsedYamlContents, $kind);
+        $deploymentCount = count($this->returnYamlContents);
+        if ($deploymentCount > 0) {
+            foreach ($this->returnYamlContents as $key => $deployment) {
+                
+                $hash = hash('md5', $deployment['file']);
+                file_put_contents('/tmp/' . $hash, $deployment['file']);
+
+                $dependency = $this->taskSpooler->addJob("$kind " . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl --kubeconfig=" . $this->kubeconfig . " apply -f " . '/tmp/' . $hash);
+                if ($kind === 'Deployment') {
+                    $this->taskSpooler->addJob('Rollout deployment ' . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl rollout status deployment --kubeconfig=" . $this->kubeconfig . " -n " . Yaml::parse($deployment['file'])['metadata']['namespace'] . " " . Yaml::parse($deployment['file'])['metadata']['name'], $dependency);
+                }
+            }
+        }
+    }
+
+    private function returnKinds($parsedYamlContents, $kind) {
+        $return = array();
+        foreach ($parsedYamlContents as $key => $value) {
+            if ($value['kind'] === $kind) {
+                array_push($this->returnYamlContents, $value);
+            }
+        }
     }
 
     private function findAndReplace($yaml) {

@@ -16,7 +16,7 @@ use App\Providers\DockerFiles;
 use App\Providers\YamlFiles;
 
 /*
-php ~/Code/kbuild/kbuild build --app=hiya --branch=master --environment=qa --build=6 --settings=/etc/parallax/settings.yaml
+php /opt/parallax/kbuild/kbuild build --app=dashboard --branch=master --environment=prod --build=1 --kubeconfig=/Users/lawrencedudley/kubeconfig
 */
 
 
@@ -144,9 +144,12 @@ class Create extends Command
 
         $this->info("Provisioning the following S3 buckets (after replacing placeholders):");
         $buckets = array();
-        foreach ($this->kbuild['aws']['s3'] as $key => $bucket) {
-            array_push($buckets, array($bucket));
+        if (isset($this->kbuild['aws']['s3']) && count($this->kbuild['aws']['s3']) > 0) {
+            foreach ($this->kbuild['aws']['s3'] as $key => $bucket) {
+                array_push($buckets, array($bucket));
+            }
         }
+
         $this->table(
             // Headers
             [
@@ -156,6 +159,41 @@ class Create extends Command
         );
 
         unset($buckets);
+
+        // Check for environment variables
+        if (count($_ENV) == 0) {
+            throw new \Exception('It looks like you have zero items in $_ENV, this suggests that your PHP is setup incorrectly. Check that your PHP ini contains variables_order=EGPCS');
+        }
+
+        $environmentVariables = array();
+
+        // Add deploy_environment variables from bamboo_env_ keys
+        foreach ($_ENV as $key => $value) {
+            if (substr($key, 0, 11 ) === "bamboo_env_") {
+                $environmentVariables[substr($key, 11)] = $value;
+            }
+        }
+
+        if (count($environmentVariables) > 0) {
+
+            // Cast each environment variable as a string
+            foreach ($environmentVariables as $key => $value) {
+                $environmentVariables[$key] = (string) $value;
+            }
+
+            // Push to an array of arrays to publish output
+            $tableOutput = array();
+            foreach ($environmentVariables as $key => $value) {
+                $push = array($key, $value);
+                array_push($tableOutput, $push);
+            }
+            $this->info("Environment Variables:");
+
+            $this->table(
+                array('Variable', 'Value'),
+                $tableOutput
+            );
+        }
 
         // Initialise the taskspooler
         $taskSpooler = new TaskSpoolerInstance();
@@ -183,7 +221,7 @@ class Create extends Command
         }
 
         // Configure the namespace first as subsequent steps depend on it
-        $createNamespace = $taskSpooler->addJob('Create Namespace', "php ~/Code/kbuild/kbuild create:namespace --namespace='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'");
+        $createNamespace = $taskSpooler->addJob('Create Namespace', "php /opt/parallax/kbuild/kbuild create:namespace --namespace='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'");
 
         // Add a job to handle MySQL
         // Check if app uses own-db-server
@@ -194,16 +232,18 @@ class Create extends Command
         if ($this->option('db-per-branch') !== FALSE) {
             $additional .= ' --db-per-branch';
         }
-        $taskSpooler->addJob('MySQL', "php ~/Code/kbuild/kbuild create:mysql --cloud-provider='" . $this->option('cloud-provider') . "' --app=" . $this->option('app') . " --branch=" . $this->option('branch') . " --environment=" . $this->option('environment') . " --settings=" . $this->option('settings') . " --kubeconfig=" . $this->option('kubeconfig') . " --db-pause=" . $this->option('db-pause') . $additional, $createNamespace);
+        $taskSpooler->addJob('MySQL', "php /opt/parallax/kbuild/kbuild create:mysql --cloud-provider='" . $this->option('cloud-provider') . "' --app=" . $this->option('app') . " --branch=" . $this->option('branch') . " --environment=" . $this->option('environment') . " --settings=" . $this->option('settings') . " --kubeconfig=" . $this->option('kubeconfig') . " --db-pause=" . $this->option('db-pause') . $additional, $createNamespace);
 
         // IAM and Object Storage
         // If AWS account id is provided, sort an IAM user and buckets
         if (isset($this->settings['aws']['accountId'])) {
-            $createIam = $taskSpooler->addJob('IAM User', "php ~/Code/kbuild/kbuild create:iam --iam-account='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'" . " --namespace='" . $this->option('app') . '-' . $this->option('environment') . "'", $createNamespace);
+            $createIam = $taskSpooler->addJob('IAM User', "php /opt/parallax/kbuild/kbuild create:iam --iam-account='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'" . " --namespace='" . $this->option('app') . '-' . $this->option('environment') . "'", $createNamespace);
 
             // For each S3 bucket requested in kbuild.yaml add a creation job
-            foreach ($this->kbuild['aws']['s3'] as $key => $bucket) {
-                $taskSpooler->addJob('S3 Bucket ' . $bucket, "php ~/Code/kbuild/kbuild create:s3bucket --iam-grantee='" . $this->option('app') . '-' . $this->option('environment') . "' --settings='" . $this->option('settings') . "'" . " --bucket-name='" . $bucket . "'", $createIam);
+            if (isset($this->kbuild['aws']['s3']) && count($this->kbuild['aws']['s3']) > 0) {
+                foreach ($this->kbuild['aws']['s3'] as $key => $bucket) {
+                    $taskSpooler->addJob('S3 Bucket ' . $bucket, "php /opt/parallax/kbuild/kbuild create:s3bucket --iam-grantee='" . $this->option('app') . '-' . $this->option('environment') . "' --settings='" . $this->option('settings') . "'" . " --bucket-name='" . $bucket . "'", $createIam);
+                }
             }
         }
 
@@ -217,9 +257,23 @@ class Create extends Command
                 'build'         => $this->option('build'),
                 'environment'   => $this->option('environment'),
                 'images'        => $dockerFiles->imageTags,
-                'kbuild'        => $this->kbuild
+                'kbuild'        => $this->kbuild,
+                'taskSpooler'   => $taskSpooler,
+                'kubeconfig'    => $this->option('kubeconfig'),
+                'environmentVariables'  => $environmentVariables
             )
         );
+
+        $yamlFiles->queue('Deployment');
+
+        $taskSpooler->wait();
+
+        $yamlFiles->queue('Ingress');
+        $yamlFiles->queue('Certificate');
+        $yamlFiles->queue('Service');
+
+        $taskSpooler->wait();
+
     }
 
     /**
