@@ -272,9 +272,8 @@ class Create extends Command
         $yamlFiles->queue('Certificate');
         $yamlFiles->queue('Service');
 
-        $taskSpooler->wait();
 
-        $taskSpooler->wait();
+        echo $taskSpooler->wait();
 
     }
 

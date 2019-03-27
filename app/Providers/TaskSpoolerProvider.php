@@ -254,10 +254,11 @@ class TaskSpoolerInstance
                 }
             }
 
-            echo $done;
-
             $table = new CliTable($this->tableData, $headers);
             echo $table->getTable();
+
+            return "done";
+
         }
     }
 
