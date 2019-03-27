@@ -257,9 +257,7 @@ class TaskSpoolerInstance
             $table = new CliTable($this->tableData, $headers);
             echo $table->getTable();
 
-            echo "finished loop";
-
-            return "done";
+            echo "\nfinished loop\n";
 
         }
     }

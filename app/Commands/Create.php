@@ -273,7 +273,7 @@ class Create extends Command
         $yamlFiles->queue('Service');
 
 
-        echo $taskSpooler->wait();
+        $taskSpooler->wait();
 
     }
 
