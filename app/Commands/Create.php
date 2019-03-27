@@ -274,6 +274,8 @@ class Create extends Command
 
         $taskSpooler->wait();
 
+        echo "All Done";
+
     }
 
     /**
