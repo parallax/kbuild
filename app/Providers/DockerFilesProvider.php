@@ -90,8 +90,9 @@ class DockerFiles {
 
                 $awsAccessKeyId = $this->settings['aws']['awsAccessKeyId'];
                 $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
+                $awsRegion = $this->settings['aws']['region'];
 
-                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --no-include-email`;
+                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --region= --no-include-email`;
                 preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
                 $repositoryBase = str_replace('https://', '', $repositoryBase[1]);
 
