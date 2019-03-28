@@ -276,16 +276,18 @@ class Create extends Command
         $taskSpooler->wait();
 
         // After Deploy
-        $afterDeploy = new AfterDeploy(
-            array(
-                'afterDeploy'   => $this->kbuild['afterDeploy'],
-                'kubeconfig'    => $this->option('kubeconfig'),
-                'taskSpooler'   => $taskSpooler
-            )
-        );
-
-        $afterDeploy->delete();
-        $taskSpooler->wait();
+        if (isset($this->kbuild['afterDeploy'])) {
+            $afterDeploy = new AfterDeploy(
+                array(
+                    'afterDeploy'   => $this->kbuild['afterDeploy'],
+                    'kubeconfig'    => $this->option('kubeconfig'),
+                    'taskSpooler'   => $taskSpooler
+                )
+            );
+    
+            $afterDeploy->delete();
+            $taskSpooler->wait();
+        } 
         // End After Deploy
 
         $taskSpooler->kill();
