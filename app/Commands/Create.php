@@ -293,15 +293,7 @@ class Create extends Command
         $taskSpooler->kill();
 
         // Spit out domain info
-        $domains = array();
-        foreach ($this->kbuild['domains'] as $key => $domain) {
-            // If this domain's settings match this build...
-            if ($domain['environments'] === '*' || $domain['environments'] === $this->settings['environment']) {
-                if ($domain['branches'] === '*' || $domain['branches'] === $this->settings['branch']) {
-                    array_push($domains, $this->findAndReplace($domain['domain']));
-                }
-            }                            
-        }
+        $domains = 
 
         print_r($domains);
 
