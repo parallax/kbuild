@@ -310,7 +310,7 @@ class Create extends Command
                 'Domain',
             ],
             // Data
-            $table;
+            $table
         );
 
     }
