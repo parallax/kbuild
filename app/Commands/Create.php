@@ -14,6 +14,7 @@ use Symfony\Component\Yaml\Yaml;
 use App\Providers\TaskSpoolerInstance;
 use App\Providers\DockerFiles;
 use App\Providers\YamlFiles;
+use App\Providers\AfterDeploy;
 
 /*
 php /opt/parallax/kbuild/kbuild build --app=dashboard --branch=master --environment=prod --build=1 --kubeconfig=/Users/lawrencedudley/kubeconfig
@@ -273,6 +274,20 @@ class Create extends Command
         $yamlFiles->queue('Service');
 
         $taskSpooler->wait();
+
+        // After Deploy
+        $afterDeploy = new AfterDeploy(
+            array(
+                'afterDeploy'   => $this->kbuild['afterDeploy'],
+                'kubeconfig'    => $this->option('kubeconfig'),
+                'taskSpooler'   => $taskSpooler
+            )
+        );
+
+        $afterDeploy->delete();
+        $taskSpooler->wait();
+        // End After Deploy
+
         $taskSpooler->kill();
 
     }
