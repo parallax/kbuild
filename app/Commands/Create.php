@@ -293,7 +293,7 @@ class Create extends Command
         $taskSpooler->kill();
 
         // Spit out domain info
-        $domains = 
+        $domains = $yamlFiles->getDomains();
 
         print_r($domains);
 
