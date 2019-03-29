@@ -195,7 +195,8 @@ class MySQL extends Command
             'type'          => 'Opaque',
             'stringData'    => array(
                 'username'      => $this->option('app'),
-                'password'      => $databasePassword
+                'password'      => $databasePassword,
+                'endpoint'      => $databaseEndpoint
             )
         );
 
