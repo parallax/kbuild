@@ -196,7 +196,8 @@ class MySQL extends Command
             'stringData'    => array(
                 'username'      => $this->option('app'),
                 'password'      => $databasePassword,
-                'endpoint'      => $databaseEndpoint
+                'endpoint'      => $databaseEndpoint,
+                'database'      => $databaseName
             )
         );
 
