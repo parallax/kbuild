@@ -189,7 +189,7 @@ class MySQL extends Command
             'apiVersion'    => 'v1',
             'kind'          => 'Secret',
             'metadata'      => array(
-                'name'          => 'mysql-credentials',
+                'name'          => 'mysql-credentials-' . $this->option('branch'),
                 'namespace'     => $this->option('app') . '-' . $this->option('environment'),
             ),
             'type'          => 'Opaque',
