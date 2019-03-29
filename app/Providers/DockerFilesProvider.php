@@ -118,7 +118,7 @@ class DockerFiles {
         }
     }
 
-    public function buildAndPush() {
+    public function buildAndPush($actuallyBuild = true) {
 
         $files = $this->asArray();
         $buildDirectory = $this->buildDirectory;
@@ -179,7 +179,9 @@ class DockerFiles {
 
             $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
             $this->imageTags[$dockerFile] = $tag;
-            $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
+            if ($actuallyBuild === true) {
+                $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build --no-cache -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
+            }
     
             return $repositoryBase;
         }

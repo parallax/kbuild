@@ -220,6 +220,11 @@ class Create extends Command
             // Oooh, we are. Shiny.
             $dockerFiles->buildAndPush();
         }
+        else {
+            // Just go through the motions
+            $dockerFiles->buildAndPush(false);
+        }
+
 
         // Configure the namespace first as subsequent steps depend on it
         $createNamespace = $taskSpooler->addJob('Create Namespace', "php /opt/parallax/kbuild/kbuild create:namespace --namespace='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'");
