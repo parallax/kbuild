@@ -265,6 +265,7 @@ class Create extends Command
             )
         );
 
+        $yamlFiles->queue('PersistentVolumeClaim');
         $yamlFiles->queue('Deployment');
 
         $taskSpooler->wait();
