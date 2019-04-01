@@ -206,6 +206,7 @@ class YamlFiles {
                 
                 $hash = hash('md5', $deployment['file']);
                 file_put_contents('/tmp/' . $hash, $deployment['file']);
+                var_dump($deployment['file']);
 
                 $dependency = $this->taskSpooler->addJob("$kind " . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl --kubeconfig=" . $this->kubeconfig . " apply -f " . '/tmp/' . $hash);
                 if ($kind === 'Deployment') {
