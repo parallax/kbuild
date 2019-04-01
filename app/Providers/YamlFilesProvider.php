@@ -108,6 +108,13 @@ class YamlFiles {
 
             if (isset($contentsArray['repeat'])) {
                 $repeat = $contentsArray['repeat'];
+                if (isset($contentsArray['repeatOnTag'])) {
+                    $repeatOnTag = $contentsArray['repeatOnTag'];
+                    unset($contentsArray['repeatOnTag']);
+                }
+                else {
+                    $repeatOnTag = '*';
+                }
                 unset($contentsArray['repeat']);
 
                 // Cycle based on the different repeater types. Initially just eachDomain:
@@ -121,9 +128,11 @@ class YamlFiles {
                             // If this domain's settings match this build...
                             if ($domain['environments'] === '*' || $domain['environments'] === $this->settings['environment']) {
                                 if ($domain['branches'] === '*' || $domain['branches'] === $this->settings['branch']) {
-                                    array_push($domains, $this->findAndReplace($domain['domain']));
+                                    if ($repeatOnTag === '*' || $repeatOnTag === $domain['tag']) {
+                                        array_push($domains, $this->findAndReplace($domain['domain']));
+                                    }
                                 }
-                            }                            
+                            }
                         }
 
                         // For each of the domains that are relevant to this build, push the file
@@ -140,6 +149,7 @@ class YamlFiles {
                             ));
                         }
                     }
+                    // End repeater on domain
                 }
             }
 
