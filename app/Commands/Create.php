@@ -275,10 +275,12 @@ class Create extends Command
 
         $taskSpooler->wait();
 
+        $yamlFiles->queue('HorizontalPodAutoscaler');
         $yamlFiles->queue('Ingress');
         $yamlFiles->queue('Certificate');
         $yamlFiles->queue('Service');
 
+        
         $taskSpooler->wait();
 
         // After Deploy
