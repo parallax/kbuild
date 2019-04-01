@@ -142,6 +142,7 @@ class YamlFiles {
                             $contentsToParse = str_replace('{{ domain_md5 }}', hash('md5', $domain), $contentsToParse);
                             $contentsArray = Yaml::parse($contentsToParse);
                             unset($contentsArray['repeat']);
+                            unset($contentsArray['repeatOnTag']);
                             array_push($this->parsedYamlContents, array(
                                 'kind'    => $contentsArray['kind'],
                                 'repeat'        => $repeat,
@@ -206,7 +207,6 @@ class YamlFiles {
                 
                 $hash = hash('md5', $deployment['file']);
                 file_put_contents('/tmp/' . $hash, $deployment['file']);
-                var_dump($deployment['file']);
 
                 $dependency = $this->taskSpooler->addJob("$kind " . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl --kubeconfig=" . $this->kubeconfig . " apply -f " . '/tmp/' . $hash);
                 if ($kind === 'Deployment') {
