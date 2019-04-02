@@ -254,6 +254,7 @@ class TaskSpoolerInstance
                 // An error has occurred
                 if ($this->jobs[$jobId]['exit'] !== '-' && $this->jobs[$jobId]['exit'] !== '0') {
                     echo "💥💥💥 Error running job \"" . $this->jobs[$jobId]['name'] . "\". Exit Code: " . $this->jobs[$jobId]['exit'] . " 💥💥💥\nLog:\n" . $this->jobs[$jobId]['output'];
+                    $this->kill();
                     exit(1);
                 }
             }
