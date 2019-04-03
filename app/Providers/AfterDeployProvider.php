@@ -62,6 +62,8 @@ class AfterDeploy {
                 }
             }
 
+            print_r($candidates);
+
             // Queue the deletions
             foreach ($candidates as $key => $name) {
                 $this->taskSpooler->addJob('Delete ' . $delete['kind'] . ' ' . $name, "kubectl --kubeconfig=" . $kubeConfig . ' -n ' . $nameSpace . ' delete ' . $delete['kind'] . ' ' . $name);
