@@ -28,12 +28,14 @@ class AfterDeploy {
     public function delete() {
         
         $kubeConfig = $this->kubeconfig;
-        $candidates = array();
         $return = array();
 
         // For each deletion block return all matching names
         foreach ($this->afterDeploy['delete'] as $key => $delete) {
             
+            // reset candidates
+            $candidates = array();
+
             if (!isset($delete['namespace'])) {
                 echo "Namespace not set in afterDeploy.delete in kbuild.yaml";
                 exit(1);
@@ -61,8 +63,6 @@ class AfterDeploy {
                     }
                 }
             }
-
-            print_r($candidates);
 
             // Queue the deletions
             foreach ($candidates as $key => $name) {
