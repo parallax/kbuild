@@ -12,6 +12,7 @@ use DateTime;
 use Exception;
 use Symfony\Component\Yaml\Yaml;
 use Illuminate\Support\ServiceProvider;
+use PurplePixie\PhpDns\DNSQuery;
 
 class OnePassword {
 
@@ -21,13 +22,16 @@ class OnePassword {
     protected $secretKey;
     protected $token;
     protected $vault;
+    protected $settings;
 
     public function __construct($args) {
+
         $this->masterPassword = $args['masterPassword'];
         $this->url = $args['url'];
         $this->email = $args['email'];
         $this->secretKey = $args['secretKey'];
         $this->app = $args['app'];
+        $this->settings = $args['settings'];
 
         // Get the token
         $token = exec("echo '" . $this->masterPassword . "' | op signin " . $this->url . " " . $this->email . " " . $this->secretKey . " --output=raw --shorthand=" . md5(date('U')), $onePasswordSession, $status);
@@ -90,6 +94,18 @@ class OnePassword {
         }
 
         if ($exists === false) {
+
+            // Do the DNS magic
+            $query=new DNSQuery($this->settings['aws']['dnsProxy'],53,60,true,false,false);
+            $results=$query->query($server,'A');
+            
+
+            foreach ($results as $key => $result) {
+                if ($result->getTypeid() === 'A') {
+                    $hostName = $result->getData();
+                }
+            }
+
             $onePasswordObject = array(
                 'sections' => array(
                     array(
@@ -104,7 +120,7 @@ class OnePassword {
                             array(
                                 'k' => 'string',
                                 'n' => 'hostname',
-                                'v' => $server,
+                                'v' => $hostName,
                                 't' => 'server'
                             ),
                             array(

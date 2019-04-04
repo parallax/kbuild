@@ -235,10 +235,11 @@ class MySQL extends Command
                 'url'               => $this->settings['mysql']['1password']['url'],
                 'email'             => $this->settings['mysql']['1password']['email'],
                 'secretKey'         => $this->settings['mysql']['1password']['secretKey'],
-                'app'               => $this->option('app')
+                'app'               => $this->option('app'),
+                'settings'          => $this->settings
             ]);
 
-            $onePassword->createOrUpdateDatabase($this->option('app') . ' ' . strtolower($serverName), 'mysql', strtolower($serverName) . '.mysql.parallax.dev', '3306', $databaseName, $databaseUser, $databasePassword);
+            $onePassword->createOrUpdateDatabase($this->option('app') . ' ' . strtolower($serverName), 'mysql', $databaseEndpoint, '3306', $databaseName, $databaseUser, $databasePassword);
         }
 
     }

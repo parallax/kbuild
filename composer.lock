@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b9f743949ec257a3c6224b636feca782",
+    "content-hash": "3b1d017df3766568eac3564c7d712272",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2052,6 +2052,47 @@
                 "simple-cache"
             ],
             "time": "2017-10-23T01:57:42+00:00"
+        },
+        {
+            "name": "purplepixie/phpdns",
+            "version": "2.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/purplepixie/phpdns.git",
+                "reference": "2eef80a6d9bbe75a600aea4ec90540e0d7adb095"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/purplepixie/phpdns/zipball/2eef80a6d9bbe75a600aea4ec90540e0d7adb095",
+                "reference": "2eef80a6d9bbe75a600aea4ec90540e0d7adb095",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "PurplePixie": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPLv3"
+            ],
+            "authors": [
+                {
+                    "name": "David Cutting",
+                    "email": "dcutting@purplepixie.org"
+                }
+            ],
+            "description": "PHP DNS Direct Query Module",
+            "time": "2016-08-29T18:18:49+00:00"
         },
         {
             "name": "ralouphie/getallheaders",
