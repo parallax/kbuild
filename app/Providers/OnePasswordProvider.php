@@ -142,14 +142,18 @@ class OnePassword {
             exit(2);
         }
 
+        $return = 'Added ';
+
         // Now cycle through the committers and see if they match up to a 1password user
         foreach ($committers as $key => $committerEmail) {
             foreach ($users as $key => $user) {
                 if ($committerEmail === $user['email']) {
                     // They match! Add them to the vault
                     exec("op add " . $user['uuid'] . " " . $this->vault . " --session=" . $this->token);
+                    $return .= $committerEmail . ' ';
                 }
             }
         }
+        echo $return;
     }
 }
