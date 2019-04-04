@@ -13,6 +13,7 @@ use Exception;
 use Symfony\Component\Yaml\Yaml;
 use Aws\Rds\RdsClient;  
 use Aws\Exception\AwsException;
+use App\Providers\OnePassword;
 
 class MySQL extends Command
 {
@@ -226,6 +227,19 @@ class MySQL extends Command
             exit(1);
         }
         $this->info('Created MySQL Database and User');
+
+        if (isset($this->settings['mysql']['1password'])) {
+            // Initialise OnePassword
+            $onePassword = new OnePassword([
+                'masterPassword'    => $this->settings['mysql']['1password']['masterPassword'],
+                'url'               => $this->settings['mysql']['1password']['url'],
+                'email'             => $this->settings['mysql']['1password']['email'],
+                'secretKey'         => $this->settings['mysql']['1password']['secretKey'],
+                'app'               => $this->option('app')
+            ]);
+
+            $onePassword->createOrUpdateDatabase($this->option('app') . ' ' . strtolower($serverName), 'mysql', strtolower($serverName) . '.mysql.parallax.dev', '3306', $databaseName, $databaseUser, $databasePassword);
+        }
 
     }
 
