@@ -115,12 +115,6 @@ class OnePassword {
                             ),
                             array(
                                 'k' => 'string',
-                                'n' => 'database',
-                                'v' => $database,
-                                't' => 'database'
-                            ),
-                            array(
-                                'k' => 'string',
                                 'n' => 'username',
                                 'v' => $username,
                                 't' => 'username'
