@@ -128,11 +128,11 @@ class DockerFiles {
         $taskSpooler = $this->taskSpooler;
         $provider = $this->cloudProvider;
 
-        dd($files);
-
         // For each docker file, get it queued up as a job
         foreach ($files as $key => $dockerFile) {
-    
+
+            echo $dockerFile;
+
             switch ($provider) {
                 case 'aws':
     
