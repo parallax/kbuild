@@ -128,6 +128,8 @@ class DockerFiles {
         $taskSpooler = $this->taskSpooler;
         $provider = $this->cloudProvider;
 
+        dd($files);
+
         // For each docker file, get it queued up as a job
         foreach ($files as $key => $dockerFile) {
     
@@ -175,7 +177,7 @@ class DockerFiles {
                     if ($actuallyBuild === true) {
                         $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
                     }
-    
+
                     break;
                 
                 case 'gcp':
