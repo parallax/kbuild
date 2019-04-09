@@ -131,8 +131,6 @@ class DockerFiles {
         // For each docker file, get it queued up as a job
         foreach ($files as $key => $dockerFile) {
 
-            echo $dockerFile;
-
             switch ($provider) {
                 case 'aws':
     
@@ -184,9 +182,9 @@ class DockerFiles {
                     # code...
                     break;
             }
-    
-            return $repositoryBase;
         }
+
+        return $repositoryBase;
     }
 
 }
