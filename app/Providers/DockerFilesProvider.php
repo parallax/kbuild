@@ -170,17 +170,17 @@ class DockerFiles {
     
                     $repositoryBase = str_replace('https://', '', $repositoryBase);
     
+                    $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
+                    $this->imageTags[$dockerFile] = $tag;
+                    if ($actuallyBuild === true) {
+                        $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
+                    }
+    
                     break;
                 
                 case 'gcp':
                     # code...
                     break;
-            }
-
-            $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
-            $this->imageTags[$dockerFile] = $tag;
-            if ($actuallyBuild === true) {
-                $taskSpooler->addJob('Dockerfile ' . $dockerFile, 'docker build -t ' . $tag . ' -f ' . $buildDirectory . '/k8s/docker/' . $dockerFile . ' . && docker push ' . $tag . ' && echo "Pushed to ' . $tag . '"');
             }
     
             return $repositoryBase;
