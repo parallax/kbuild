@@ -42,7 +42,8 @@ class Create extends Command
         {--db-pause=60 : The amount of time in minutes to pause an Aurora instance after no activity}
         {--db-per-branch : Whether to use one database per branch}
         {--use-own-db-server : Whether to use a server explicitly spun up for this app}
-        {--settings=/etc/parallax/settings.yaml : The settings.yaml file to use}';
+        {--settings=/etc/parallax/settings.yaml : The settings.yaml file to use}
+        {--ttl= : How long (in hours) to keep things created by this build alive for (useful for QA!)}';
 
     /**
      * The description of the command.
@@ -116,6 +117,15 @@ class Create extends Command
         else {
             $dockerBuild = 'Yes';
         }
+
+        if ($this->option('ttl') == FALSE) {
+            $ttl = 'FALSE';
+        }
+        else {
+            $ttl = date("Y-m-d H:i:s", strtotime('+' . $this->option('ttl') . ' hours'))
+        }
+
+        var_dump($ttl);
 
         // Output what we're building
         $this->table(
