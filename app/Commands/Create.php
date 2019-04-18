@@ -122,7 +122,7 @@ class Create extends Command
             $ttl = 'FALSE';
         }
         else {
-            $ttl = date("Y-m-d H:i:s", strtotime('+' . $this->option('ttl') . ' hours'));
+            $ttl = date("U", strtotime('+' . $this->option('ttl') . ' hours'));
         }
 
         var_dump($ttl);
