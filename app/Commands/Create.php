@@ -119,7 +119,7 @@ class Create extends Command
         }
 
         if ($this->option('ttl') == FALSE) {
-            $ttl = 'FALSE';
+            $ttl = FALSE;
         }
         else {
             $ttl = date("U", strtotime('+' . $this->option('ttl') . ' hours'));
@@ -275,7 +275,8 @@ class Create extends Command
                 'kbuild'        => $this->kbuild,
                 'taskSpooler'   => $taskSpooler,
                 'kubeconfig'    => $this->option('kubeconfig'),
-                'environmentVariables'  => $environmentVariables
+                'environmentVariables'  => $environmentVariables,
+                'ttl'           => $ttl
             )
         );
 

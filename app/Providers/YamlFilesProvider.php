@@ -41,6 +41,7 @@ class YamlFiles {
         $this->taskSpooler = $args['taskSpooler'];
         $this->kubeconfig = $args['kubeconfig'];
         $this->environmentVariables = $args['environmentVariables'];
+        $this->ttl = $args['ttl'];
 
         $yamlFiles = scandir($this->yamlDirectory);
         $this->yamlFiles = $yamlFiles;

@@ -29,7 +29,7 @@ class CreateNamespace extends Command
      *
      * @var string
      */
-    protected $description = 'Declare a MySQL database and/or server';
+    protected $description = 'Declare a Kubernetes Namespace';
 
     /**
      * Execute the console command.
@@ -48,6 +48,9 @@ class CreateNamespace extends Command
             'kind'          => 'Namespace',
             'metadata'      => array(
                 'name'          => $this->option('namespace'),
+                'labels'        => array(
+                    'name'          => $this->option('namespace')
+                )
             )
         );
 
