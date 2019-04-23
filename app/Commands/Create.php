@@ -280,6 +280,7 @@ class Create extends Command
             )
         );
 
+        $yamlFiles->queue('NetworkPolicy');
         $yamlFiles->queue('PersistentVolumeClaim');
         $yamlFiles->queue('Deployment');
         $yamlFiles->queue('StatefulSet');
