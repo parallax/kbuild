@@ -125,8 +125,6 @@ class Create extends Command
             $ttl = date("U", strtotime('+' . $this->option('ttl') . ' hours'));
         }
 
-        var_dump($ttl);
-
         // Output what we're building
         $this->table(
             // Headers

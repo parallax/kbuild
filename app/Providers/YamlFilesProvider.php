@@ -24,6 +24,7 @@ class YamlFiles {
     protected $parsedYamlContents;
     protected $returnYamlContents;
     protected $kbuild;
+    protected $ttl;
     protected $environmentVariables;
 
     public function __construct($args) {
@@ -144,6 +145,10 @@ class YamlFiles {
                             $contentsArray = Yaml::parse($contentsToParse);
                             unset($contentsArray['repeat']);
                             unset($contentsArray['repeatOnTag']);
+                            // TTL handling
+                            if (isset($this->ttl)) {
+                                $contentsArray['metadata']['annotations']['ttl'] = $this->ttl;
+                            }
                             array_push($this->parsedYamlContents, array(
                                 'kind'    => $contentsArray['kind'],
                                 'repeat'        => $repeat,
@@ -158,6 +163,10 @@ class YamlFiles {
             else {
                 $repeat = null;
                 $contentsArray = Yaml::parse($contents);
+                // TTL handling
+                if (isset($this->ttl)) {
+                    $contentsArray['metadata']['annotations']['ttl'] = $this->ttl;
+                }
                 array_push($this->parsedYamlContents, array(
                     'kind'    => $contentsArray['kind'],
                     'repeat'        => $repeat,
