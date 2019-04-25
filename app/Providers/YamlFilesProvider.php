@@ -146,7 +146,7 @@ class YamlFiles {
                             unset($contentsArray['repeat']);
                             unset($contentsArray['repeatOnTag']);
                             // TTL handling
-                            if (isset($this->ttl)) {
+                            if (isset($this->ttl) && $this->ttl !== FALSE) {
                                 $contentsArray['metadata']['annotations']['ttl'] = $this->ttl;
                             }
                             array_push($this->parsedYamlContents, array(
@@ -218,9 +218,7 @@ class YamlFiles {
                 $hash = hash('md5', $deployment['file']);
                 file_put_contents('/tmp/' . $hash, $deployment['file']);
 
-                echo "\n\n\n";
                 echo $deployment['file'];
-                echo "\n\n\n";
 
                 $dependency = $this->taskSpooler->addJob("$kind " . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl --kubeconfig=" . $this->kubeconfig . " apply -f " . '/tmp/' . $hash);
                 if ($kind === 'Deployment') {
