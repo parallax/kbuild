@@ -125,6 +125,11 @@ class Create extends Command
             $ttl = date("U", strtotime('+' . $this->option('ttl') . ' hours'));
         }
 
+        // Make sure no .git directories make it onto production
+        $this->info("Excluding any .git folders from Docker");
+        $dockerIgnore = "\n#Automatically added by kbuild\n.git\n#End automatically added by kbuild";
+        file_put_contents($buildDirectory . '/.dockerignore', $dockerIgnore, FILE_APPEND);
+
         // Output what we're building
         $this->table(
             // Headers
