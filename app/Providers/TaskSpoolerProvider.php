@@ -116,7 +116,7 @@ class TaskSpoolerInstance
 
         if ($this->jobs[$jobId]['status'] !== 'queued' && $this->jobs[$jobId]['status'] !== 'skipped') {
             $this->jobs[$jobId]['output'] = trim(shell_exec($this->export . 'cat ' . trim(shell_exec($this->export . 'tsp -o ' . $jobId))));
-            $this->jobs[$jobId]['lastLine'] = trim(shell_exec($this->export . 'cat ' . trim(shell_exec($this->export . 'tsp -o ' . $jobId)) . '| tail -n 1'));
+            $this->jobs[$jobId]['lastLine'] = preg_replace('/^[ \t]*[\r\n]+/m', '', trim(shell_exec($this->export . 'cat ' . trim(shell_exec($this->export . 'tsp -o ' . $jobId)) . '| tail -n 1')), );
             $this->jobs[$jobId]['exit'] = $this->getExitCode($info);
             $this->jobs[$jobId]['duration'] = $this->getDuration($info);
         }
