@@ -184,14 +184,16 @@ class YamlFiles {
 
     public function getDomains () {
         $domains = array();
-        foreach ($this->kbuild['domains'] as $key => $domain) {
-            // If this domain's settings match this build...
-            if ($domain['environments'] === '*' || $domain['environments'] === $this->settings['environment']) {
-                if ($domain['branches'] === '*' || $domain['branches'] === $this->settings['branch']) {
-                    array_push($domains, $this->findAndReplace($domain['domain']));
-                }
-            }             
-        }
+        if (isset($this->kbuild['domains']) && count($this->kbuild['domains']) > 0) {
+            foreach ($this->kbuild['domains'] as $key => $domain) {
+                // If this domain's settings match this build...
+                if ($domain['environments'] === '*' || $domain['environments'] === $this->settings['environment']) {
+                    if ($domain['branches'] === '*' || $domain['branches'] === $this->settings['branch']) {
+                        array_push($domains, $this->findAndReplace($domain['domain']));
+                    }
+                }             
+            }
+        }  
         return $domains;
     }
 
