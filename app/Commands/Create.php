@@ -318,23 +318,26 @@ class Create extends Command
         // Spit out domain info
         $domains = $yamlFiles->getDomains();
 
-        foreach ($domains as $key => $domain) {
-            $table[$key] = array(
-                $domain
+        if (count($domains) > 0) {
+
+            $this->info('Domains for access:');
+    
+            // Output what we're building
+            $this->table(
+                // Headers
+                [
+                    'Domain',
+                ],
+                // Data
+                $table
             );
+
+            foreach ($domains as $key => $domain) {
+                $table[$key] = array(
+                    $domain
+                );
+            }
         }
-
-        $this->info('Domains for access:');
-
-        // Output what we're building
-        $this->table(
-            // Headers
-            [
-                'Domain',
-            ],
-            // Data
-            $table
-        );
 
     }
 
