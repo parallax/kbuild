@@ -220,11 +220,6 @@ class YamlFiles {
 
                 $dependency = $this->taskSpooler->addJob("$kind " . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl --kubeconfig=" . $this->kubeconfig . " apply -f " . '/tmp/' . $hash);
                 if ($kind === 'Deployment') {
-                    // Error handling for missing namespace in a deployment
-                    if (!isset(Yaml::parse($deployment['file'])['metadata']['namespace'])) {
-                        echo "Deployment is missing a metadata.namespace, you need to add one";
-                        exit(1);
-                    }
                     $this->taskSpooler->addJob('Rollout deployment ' . Yaml::parse($deployment['file'])['metadata']['name'], "kubectl rollout status deployment --kubeconfig=" . $this->kubeconfig . " -n " . Yaml::parse($deployment['file'])['metadata']['namespace'] . " " . Yaml::parse($deployment['file'])['metadata']['name'], $dependency);
                 }
             }
