@@ -322,6 +322,12 @@ class Create extends Command
 
             $this->info('Domains for access:');
     
+            foreach ($domains as $key => $domain) {
+                $table[$key] = array(
+                    $domain
+                );
+            }
+    
             // Output what we're building
             $this->table(
                 // Headers
@@ -331,12 +337,6 @@ class Create extends Command
                 // Data
                 $table
             );
-
-            foreach ($domains as $key => $domain) {
-                $table[$key] = array(
-                    $domain
-                );
-            }
         }
 
     }
