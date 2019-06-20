@@ -85,6 +85,72 @@ class GarbageCollection extends Command
 
         }
 
+        // HPA
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get hpa --all-namespaces -o json";
+
+        $hpas = shell_exec($command);
+
+        $hpas = json_decode($hpas, TRUE);
+
+        foreach ($hpas['items'] as $key => $hpa) {
+
+            if (isset($hpa['metadata']['annotations']['ttl']) && $hpa['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $hpa['metadata']['name'],
+                    'namespace' => $hpa['metadata']['namespace'],
+                    'kind' => $hpa['kind'],
+                    'ttl' => $hpa['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
+        // Services
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get services --all-namespaces -o json";
+
+        $services = shell_exec($command);
+
+        $services = json_decode($hpas, TRUE);
+
+        foreach ($services['items'] as $key => $service) {
+
+            if (isset($service['metadata']['annotations']['ttl']) && $service['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $service['metadata']['name'],
+                    'namespace' => $service['metadata']['namespace'],
+                    'kind' => $service['kind'],
+                    'ttl' => $service['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
+        // Ingresses
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get ing --all-namespaces -o json";
+
+        $ingresses = shell_exec($command);
+
+        $ingresses = json_decode($hpas, TRUE);
+
+        foreach ($ingresses['items'] as $key => $ingress) {
+
+            if (isset($ingress['metadata']['annotations']['ttl']) && $ingress['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $ingress['metadata']['name'],
+                    'namespace' => $ingress['metadata']['namespace'],
+                    'kind' => $ingress['kind'],
+                    'ttl' => $ingress['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
         $this->table(
             // Headers
             [
