@@ -113,7 +113,7 @@ class GarbageCollection extends Command
 
         $services = shell_exec($command);
 
-        $services = json_decode($hpas, TRUE);
+        $services = json_decode($services, TRUE);
 
         foreach ($services['items'] as $key => $service) {
 
@@ -135,7 +135,7 @@ class GarbageCollection extends Command
 
         $ingresses = shell_exec($command);
 
-        $ingresses = json_decode($hpas, TRUE);
+        $ingresses = json_decode($ingresses, TRUE);
 
         foreach ($ingresses['items'] as $key => $ingress) {
 
