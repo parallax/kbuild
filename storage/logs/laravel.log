@@ -1086,3 +1086,113 @@
 #9 /Users/dan/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
 #10 {main}
 "} 
+[2019-06-12 12:08:51] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [default] is not defined. at /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:168)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(102): Illuminate\\Log\\LogManager->resolve('default')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(90): Illuminate\\Log\\LogManager->get('default')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(500): Illuminate\\Log\\LogManager->driver()
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Exceptions/Handler.php(114): Illuminate\\Log\\LogManager->error('Method App\\\\Comm...', Array)
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(367): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(BadMethodCallException))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(124): Illuminate\\Foundation\\Console\\Kernel->reportException(Object(BadMethodCallException))
+#6 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2019-06-12 12:08:51] laravel.ERROR: Method App\Commands\k8s::menu does not exist. {"exception":"[object] (BadMethodCallException(code: 0): Method App\\Commands\\k8s::menu does not exist. at /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Support/Traits/Macroable.php:102)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/app/Commands/k8s.php(44): Illuminate\\Console\\Command->__call('menu', Array)
+#1 [internal function]: App\\Commands\\k8s->handle()
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(32): call_user_func_array(Array, Array)
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(90): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(34): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(LaravelZero\\Framework\\Application), Array, Object(Closure))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/Container.php(580): Illuminate\\Container\\BoundMethod::call(Object(LaravelZero\\Framework\\Application), Array, Array, NULL)
+#6 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Command.php(183): Illuminate\\Container\\Container->call(Array)
+#7 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Command/Command.php(255): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#9 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(908): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(269): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Commands\\k8s), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(145): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Application.php(90): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(122): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 {main}
+"} 
+[2019-06-12 12:15:29] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [default] is not defined. at /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:168)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(102): Illuminate\\Log\\LogManager->resolve('default')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(90): Illuminate\\Log\\LogManager->get('default')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(500): Illuminate\\Log\\LogManager->driver()
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Exceptions/Handler.php(114): Illuminate\\Log\\LogManager->error('There are no co...', Array)
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(367): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(124): Illuminate\\Foundation\\Console\\Kernel->reportException(Object(Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException))
+#6 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2019-06-12 12:15:29] laravel.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php:585)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(625): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(233): Symfony\\Component\\Console\\Application->find('app:build')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(145): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Application.php(90): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(122): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#6 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 {main}
+"} 
+[2019-06-12 12:17:19] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [default] is not defined. at /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:168)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(102): Illuminate\\Log\\LogManager->resolve('default')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(90): Illuminate\\Log\\LogManager->get('default')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(500): Illuminate\\Log\\LogManager->driver()
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Exceptions/Handler.php(114): Illuminate\\Log\\LogManager->error('There are no co...', Array)
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(367): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(124): Illuminate\\Foundation\\Console\\Kernel->reportException(Object(Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException))
+#6 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2019-06-12 12:17:19] laravel.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php:585)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(625): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(233): Symfony\\Component\\Console\\Application->find('app:build')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(145): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Application.php(90): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(122): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#6 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 {main}
+"} 
+[2019-06-12 12:17:21] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [default] is not defined. at /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:168)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(102): Illuminate\\Log\\LogManager->resolve('default')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(90): Illuminate\\Log\\LogManager->get('default')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(500): Illuminate\\Log\\LogManager->driver()
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Exceptions/Handler.php(114): Illuminate\\Log\\LogManager->error('Use of undefine...', Array)
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(367): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(ErrorException))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(124): Illuminate\\Foundation\\Console\\Kernel->reportException(Object(ErrorException))
+#6 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#7 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2019-06-12 12:17:21] laravel.ERROR: Use of undefined constant DS - assumed 'DS' (this will throw an Error in a future version of PHP) {"exception":"[object] (ErrorException(code: 0): Use of undefined constant DS - assumed 'DS' (this will throw an Error in a future version of PHP) at /Users/lawrencedudley/Code/kbuild/app/Commands/k8s.php:48)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/app/Commands/k8s.php(48): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(2, 'Use of undefine...', '/Users/lawrence...', 48, Array)
+#1 [internal function]: App\\Commands\\k8s->handle()
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(32): call_user_func_array(Array, Array)
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(90): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(34): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(LaravelZero\\Framework\\Application), Array, Object(Closure))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Container/Container.php(580): Illuminate\\Container\\BoundMethod::call(Object(LaravelZero\\Framework\\Application), Array, Array, NULL)
+#6 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Command.php(183): Illuminate\\Container\\Container->call(Array)
+#7 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Command/Command.php(255): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#9 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(908): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(269): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Commands\\k8s), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /Users/lawrencedudley/Code/kbuild/vendor/symfony/console/Application.php(145): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Console/Application.php(90): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Console/Kernel.php(122): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/framework/src/Kernel.php(77): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 {main}
+"} 

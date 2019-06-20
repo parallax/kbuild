@@ -97,7 +97,7 @@ class GarbageCollection extends Command
             $resources
         );
 
-
+        exit;
         // Deletions
         foreach ($resources as $key => $resource) {
             if (isset($resource['name']) && isset($resource['namespace']) && isset($resource['kind']) && isset($resource['ttl'])) {
