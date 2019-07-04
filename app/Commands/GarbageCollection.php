@@ -20,7 +20,8 @@ class GarbageCollection extends Command
      * @var string
      */
     protected $signature = 'garbage 
-        {--kubeconfig= : The path to the kubeconfig file}';
+        {--kubeconfig= : The path to the kubeconfig file}
+        {--delete : Actually delete stuff rather than just printing}';
 
     /**
      * The description of the command.
@@ -36,6 +37,14 @@ class GarbageCollection extends Command
      */
     public function handle()
     {
+
+        if (false !== $this->option('delete')) {
+            $this->info("Actually deleting things as the --delete flag was passed");
+        }
+
+        else {
+            $this->info("Not deleting anything as --delete was not passed");
+        }
 
         $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get deployments --all-namespaces -o json";
 
@@ -163,23 +172,22 @@ class GarbageCollection extends Command
             $resources
         );
 
-        // Deletions
-        foreach ($resources as $key => $resource) {
-            if (isset($resource['name']) && isset($resource['namespace']) && isset($resource['kind']) && isset($resource['ttl'])) {
-
-
-                $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " delete " . $resource['kind'] . " -n " . $resource['namespace'] . " " . $resource['name'];
-
-                system($command, $exit);
-                if ($exit !== 0) {
-                    echo "Error deleting " . $resource['kind'] . " " . $resource['name'] . " in " . $resource['namespace'];
-                    exit(1);
+        if (false !== $this->option('delete')) {
+            // Deletions
+            foreach ($resources as $key => $resource) {
+                if (isset($resource['name']) && isset($resource['namespace']) && isset($resource['kind']) && isset($resource['ttl'])) {
+    
+    
+                    $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " delete " . $resource['kind'] . " -n " . $resource['namespace'] . " " . $resource['name'];
+    
+                    system($command, $exit);
+                    if ($exit !== 0) {
+                        echo "Error deleting " . $resource['kind'] . " " . $resource['name'] . " in " . $resource['namespace'];
+                        exit(1);
+                    }
                 }
             }
         }
-
-
-
     }
 
     /**

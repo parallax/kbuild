@@ -1196,3 +1196,18 @@
 #15 /Users/lawrencedudley/Code/kbuild/kbuild(37): LaravelZero\\Framework\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
 #16 {main}
 "} 
+[2019-07-04 11:47:26] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [default] is not defined. at /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:168)
+[stacktrace]
+#0 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(102): Illuminate\\Log\\LogManager->resolve('default')
+#1 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(90): Illuminate\\Log\\LogManager->get('default')
+#2 /Users/lawrencedudley/Code/kbuild/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(500): Illuminate\\Log\\LogManager->driver()
+#3 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Exceptions/Handler.php(114): Illuminate\\Log\\LogManager->error('Cannot use isse...', Array)
+#4 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(81): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(Symfony\\Component\\Debug\\Exception\\FatalErrorException))
+#5 /Users/lawrencedudley/Code/kbuild/vendor/laravel-zero/foundation/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(123): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleException(Object(Symfony\\Component\\Debug\\Exception\\FatalErrorException))
+#6 [internal function]: Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleShutdown()
+#7 {main}
+"} 
+[2019-07-04 11:47:26] laravel.ERROR: Cannot use isset() on the result of an expression (you can use "null !== expression" instead) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 64): Cannot use isset() on the result of an expression (you can use \"null !== expression\" instead) at /Users/lawrencedudley/Code/kbuild/app/Commands/GarbageCollection.php:41)
+[stacktrace]
+#0 {main}
+"} 
