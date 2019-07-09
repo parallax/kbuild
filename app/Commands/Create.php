@@ -295,6 +295,7 @@ class Create extends Command
         $yamlFiles->queue('Certificate');
         $yamlFiles->queue('Service');
         $yamlFiles->queue('PodDisruptionBudget');
+        $yamlFiles->queue('CronJob');
 
         
         $taskSpooler->wait();
