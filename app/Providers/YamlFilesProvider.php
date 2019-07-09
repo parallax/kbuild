@@ -108,6 +108,21 @@ class YamlFiles {
                 $contents = Yaml::dump($contentsArray, 50);
             }
 
+            // If this is a cronjob then add environment variables to it
+            if ($contentsArray['kind'] === 'CronJob') {
+                foreach ($contentsArray['spec']['jobTemplate']['spec']['template']['spec']['containers'] as $containerKey => $container) {
+                    if (!isset($container['env'])) {
+                        $contentsArray['spec']['jobTemplate']['spec']['template']['spec']['containers'][$containerKey]['env'] = array();
+                    }
+
+                    // Now push in the vars
+                    foreach ($this->environmentVariables as $environmentKey => $environmentValue) {
+                        array_push($contentsArray['spec']['jobTemplate']['spec']['template']['spec']['containers'][$containerKey]['env'],  array('name' => $environmentKey, 'value' => $environmentValue));
+                    }
+                }
+                $contents = Yaml::dump($contentsArray, 50);
+            }
+
             if (isset($contentsArray['repeat'])) {
                 $repeat = $contentsArray['repeat'];
                 if (isset($contentsArray['repeatOnTag'])) {
