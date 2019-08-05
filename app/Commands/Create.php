@@ -241,16 +241,20 @@ class Create extends Command
         // Configure the namespace first as subsequent steps depend on it
         $createNamespace = $taskSpooler->addJob('Create Namespace', "php /opt/parallax/kbuild/kbuild create:namespace --namespace='" . $this->option('app') . '-' . $this->option('environment') . "' --kubeconfig='" . $this->option('kubeconfig') . "' --settings='" . $this->option('settings') . "'");
 
-        // Add a job to handle MySQL
-        // Check if app uses own-db-server
-        $additional = '';
-        if ($this->option('use-own-db-server') !== FALSE) {
-            $additional .= ' --use-own-db-server';
+        // Add a job to handle MySQL if settings->mysql is set
+        if (isset($this->settings['mysql'])) {
+
+            // Check if app uses own-db-server
+            $additional = '';
+            if ($this->option('use-own-db-server') !== FALSE) {
+                $additional .= ' --use-own-db-server';
+            }
+            if ($this->option('db-per-branch') !== FALSE) {
+                $additional .= ' --db-per-branch';
+            }
+            $taskSpooler->addJob('MySQL', "php /opt/parallax/kbuild/kbuild create:mysql --cloud-provider='" . $this->option('cloud-provider') . "' --app=" . $this->option('app') . " --branch=" . $this->option('branch') . " --environment=" . $this->option('environment') . " --settings=" . $this->option('settings') . " --kubeconfig=" . $this->option('kubeconfig') . " --db-pause=" . $this->option('db-pause') . $additional, $createNamespace);
+
         }
-        if ($this->option('db-per-branch') !== FALSE) {
-            $additional .= ' --db-per-branch';
-        }
-        $taskSpooler->addJob('MySQL', "php /opt/parallax/kbuild/kbuild create:mysql --cloud-provider='" . $this->option('cloud-provider') . "' --app=" . $this->option('app') . " --branch=" . $this->option('branch') . " --environment=" . $this->option('environment') . " --settings=" . $this->option('settings') . " --kubeconfig=" . $this->option('kubeconfig') . " --db-pause=" . $this->option('db-pause') . $additional, $createNamespace);
 
         // IAM and Object Storage
         // If AWS account id is provided, sort an IAM user and buckets
