@@ -81,6 +81,95 @@ class Create extends Command
             $this->kbuild = null;
         }
 
+        // Validate Yaml Before Starting Build
+
+        function strposa($haystack, $needles=array(), $offset=0) {
+            $chr = array();
+            foreach($needles as $needle) {
+                    $res = strpos($haystack, $needle, $offset);
+                    if ($res !== false) $chr[$needle] = $res;
+            }
+            if(empty($chr)) return false;
+            return min($chr);
+        }
+
+
+        $YamlDirFiles = preg_grep('~\.yaml$~', scandir($buildDirectory . '/k8s/yaml/'));
+        $yamlLintOutput = array();
+        $yamlPasses = TRUE;
+
+        $yamlLintConfig = array(
+            'extends'   => 'relaxed',
+            'rules'     => array(
+                'new-line-at-end-of-file'   => 'disable',
+                'trailing-spaces'           => 'disable',
+                'comments'                  => 'disable'
+            )
+        );
+
+        $yamlLintConfig = Yaml::dump($yamlLintConfig);
+
+        //dd($yamlLintConfig);
+
+        foreach ($YamlDirFiles as $key => $YamlDirFile) {
+            exec('yamllint -d "' . $yamlLintConfig . '" ' . $buildDirectory . '/k8s/yaml/' .  $YamlDirFile, $yamlLintOutput[$key]['errors'], $yamlLintOutput[$key]['exitCode']);
+            $yamlLintOutput[$key]['filename'] = $YamlDirFile;
+        }
+
+        // $output now contains an array with the yamllint output. We need to work through it and tidy it.
+        foreach ($yamlLintOutput as $key => $yamlLintFile) {
+
+            if (isset($yamlLintFile['errors'][0])) {
+                unset($yamlLintOutput[$key]['errors'][0]);
+            }
+            foreach ($yamlLintFile['errors'] as $yamlLintOutputRowKey => $yamlLintOutputRow) {
+                if ($yamlLintOutputRow === '') {
+                    unset($yamlLintOutput[$key]['errors'][$yamlLintOutputRowKey]);
+                }
+            }
+        }
+
+        // Now extract line numbers and columns from the errors in $yamlLintOutput[x]['errors']
+        foreach ($yamlLintOutput as $key => $yamlLintFile) {
+            foreach ($yamlLintFile['errors'] as $errorKey => $yamlLintFileError) {
+                    if (strpos($yamlLintFileError, ':')) {
+                    $yamlLintOutput[$key]['parsedErrors'][$errorKey]['line'] = substr($yamlLintFileError, 0, strpos($yamlLintFileError, ':'));
+                    $yamlLintOutput[$key]['parsedErrors'][$errorKey]['column'] = substr($yamlLintFileError, 0, strpos($yamlLintFileError, '    '));
+                    $yamlLintOutput[$key]['parsedErrors'][$errorKey]['column'] = substr($yamlLintOutput[$key]['parsedErrors'][$errorKey]['column'], strpos($yamlLintOutput[$key]['parsedErrors'][$errorKey]['column'], ':') + 1);
+                    $yamlLintOutput[$key]['parsedErrors'][$errorKey]['error'] = substr($yamlLintFileError, strposa($yamlLintFileError, array('error', 'warning')));
+                }
+            }
+            if ($yamlLintFile['exitCode'] !== 0) {
+                $yamlPasses = FALSE;
+            }
+        }
+
+        $this->info('Linting YAML files in k8s/yaml');
+
+        foreach ($yamlLintOutput as $key => $yamlLintFile) {
+            if (isset($yamlLintFile['parsedErrors'])) {
+                $this->info($yamlLintFile['filename']);
+                $this->table(
+                    // Headers
+                    [
+                        'Line',
+                        'Column',
+                        'Error'
+                    ],
+                    // Data
+                    $yamlLintFile['parsedErrors']
+                );
+            }
+        }
+
+        if ($yamlPasses === FALSE) {
+            echo "Please fix anything in your YAML files marked above as 'error'. Warnings are ok, errors are not.\n";
+            exit(1);
+        }
+        else {
+            $this->info('All YAML files in k8s/yaml have passed initial validation');
+        }       
+
         // Load in settings
         $this->settings = Yaml::parseFile($this->option('settings'));
 
