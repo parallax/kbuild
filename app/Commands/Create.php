@@ -387,6 +387,8 @@ class Create extends Command
         $yamlFiles->queue('Role');
         $yamlFiles->queue('RoleBinding');
         $yamlFiles->queue('ClusterRoleBinding');
+        $yamlFiles->queue('CustomResourceDefinition');
+        $yamlFiles->queue('Secret');
 
         $taskSpooler->wait();
 
