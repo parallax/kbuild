@@ -3,3 +3,4 @@
 /.vscode
 /.vagrant
 /certs
+.DS_Store

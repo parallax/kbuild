@@ -24,6 +24,7 @@
         "nunomaduro/laravel-console-menu": "^2.1",
         "purplepixie/phpdns": "^2.0",
         "spatie/async": "^0.0.4",
+        "symfony/finder": "^4.3",
         "symfony/yaml": "^4.2",
         "zendframework/zend-text": "^2.7"
     },
