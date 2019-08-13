@@ -50,7 +50,13 @@ class DockerFiles {
 
     public function asArray() {
         // Find all docker files in k8s/docker that we need to build
-        $dockerFiles = scandir($this->buildDirectory . '/k8s/docker/');
+        if (file_exists($this->buildDirectory . '/k8s/docker/')) {
+            $dockerFiles = scandir($this->buildDirectory . '/k8s/docker/');
+        }
+
+        else {
+            $dockerFiles = array();
+        }
 
         // Filter for anything beginning with a .
         foreach ($dockerFiles as $key => $dockerFile) {
