@@ -242,7 +242,6 @@ class Create extends Command
         );
 
 
-
         unset($dockerBuild);
 
         $this->info("Provisioning the following S3 buckets (after replacing placeholders):");
@@ -318,13 +317,15 @@ class Create extends Command
         $dockerFiles->asTable();
 
         // Check if we're building docker images on this run
-        if ($this->option('no-docker-build') == FALSE) {
-            // Oooh, we are. Shiny.
-            $dockerFiles->buildAndPush();
-        }
-        else {
-            // Just go through the motions
-            $dockerFiles->buildAndPush(false);
+        if (count($dockerFiles->asArray()) > 0) {
+            if ($this->option('no-docker-build') == FALSE) {
+                // Oooh, we are. Shiny.
+                $dockerFiles->buildAndPush();
+            }
+            elseif ($this->option('no-docker-build') !== FALSE) {
+                // Just go through the motions
+                $dockerFiles->buildAndPush(false);
+            }
         }
 
         // Configure the namespace first as subsequent steps depend on it
@@ -380,6 +381,12 @@ class Create extends Command
         $yamlFiles->queue('PersistentVolumeClaim');
         $yamlFiles->queue('Deployment');
         $yamlFiles->queue('StatefulSet');
+        $yamlFiles->queue('ConfigMap');
+        $yamlFiles->queue('ServiceAccount');
+        $yamlFiles->queue('ClusterRole');
+        $yamlFiles->queue('Role');
+        $yamlFiles->queue('RoleBinding');
+        $yamlFiles->queue('ClusterRoleBinding');
 
         $taskSpooler->wait();
 

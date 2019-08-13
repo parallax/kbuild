@@ -95,15 +95,21 @@ class OnePassword {
 
         if ($exists === false) {
 
-            // Do the DNS magic
-            $query=new DNSQuery($this->settings['aws']['dnsProxy'],53,60,true,false,false);
-            $results=$query->query($server,'A');
-            
-
-            foreach ($results as $key => $result) {
-                if ($result->getTypeid() === 'A') {
-                    $hostName = $result->getData();
+            if (isset($this->settings['aws']['dnsProxy'])) {
+                // Do the DNS magic
+                $query=new DNSQuery($this->settings['aws']['dnsProxy'],53,60,true,false,false);
+                $results=$query->query($server,'A');
+                
+    
+                foreach ($results as $key => $result) {
+                    if ($result->getTypeid() === 'A') {
+                        $hostName = $result->getData();
+                    }
                 }
+            }
+
+            else {
+                $hostName = $server;
             }
 
             $onePasswordObject = array(
