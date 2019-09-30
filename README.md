@@ -1,37 +1,17 @@
-<p align="center">
-    <img title="Laravel Zero" height="100" src="https://raw.githubusercontent.com/laravel-zero/docs/master/images/logo/laravel-zero-readme.png" />
-</p>
+# What is Kbuild?
 
-<p align="center">
-  <a href="https://travis-ci.org/laravel-zero/framework"><img src="https://img.shields.io/travis/laravel-zero/framework/stable.svg" alt="Build Status"></img></a>
-  <a href="https://scrutinizer-ci.com/g/laravel-zero/framework"><img src="https://img.shields.io/scrutinizer/g/laravel-zero/framework.svg" alt="Quality Score"></img></a>
-  <a href="https://packagist.org/packages/laravel-zero/framework"><img src="https://poser.pugx.org/laravel-zero/framework/d/total.svg" alt="Total Downloads"></a>
-  <a href="https://packagist.org/packages/laravel-zero/framework"><img src="https://poser.pugx.org/laravel-zero/framework/v/stable.svg" alt="Latest Stable Version"></a>
-  <a href="https://packagist.org/packages/laravel-zero/framework"><img src="https://poser.pugx.org/laravel-zero/framework/license.svg" alt="License"></a>
-</p>
+Kbuild is a tool Parallax has created internally to facilitate deploying apps to Kubernetes. As an agency we have 200 or so projects that we've built for customers - these range from a simple website through to complex software.
 
-<h4> <center>This is a <bold>community project</bold> and not an official Laravel one </center></h4>
+We used to use shared hosting of some sort (nice shared hosting) but were outgrowing the limitations of it as different projects had different dependencies and it wasn't just a case of "some PHP and some MySQL" anymore. Containers, Docker and Kubernetes make sense for our use case and while they add significant complexity they also make it possible to run varied workloads in a homogenous manner.
 
-Laravel Zero was created by, and is maintained by [Nuno Maduro](https://github.com/nunomaduro), and is a micro-framework that provides an elegant starting point for your console application. It is an **unofficial** and customized version of Laravel optimized for building command-line applications.
+## Project Objectives
 
-- Built on top of the [Laravel](https://laravel.com) components.
-- Optional installation of Laravel [Eloquent](https://laravel-zero.com/docs/database/), Laravel [Logging](https://laravel-zero.com/docs/logging/) and many others.
-- Supports interactive [menus](https://laravel-zero.com/docs/build-interactive-menus/) and [desktop notifications](https://laravel-zero.com/docs/send-desktop-notifications/) on Linux, Windows & MacOS.
-- Ships with a [Scheduler](https://laravel-zero.com/docs/task-scheduling/) and  a [Standalone Compiler](https://laravel-zero.com/docs/build-a-standalone-application/).
-- Integration with [Collision](https://github.com/nunomaduro/collision) - Beautiful error reporting
+This is our second go at writing something like this. The first one was very prescriptive and tried to force you down certain paths. Which worked, until what you wanted to do wasn't a good fit anymore.
 
-------
+Kbuild tries to mostly stay out of the way and let you write templated YAML files that are easy to deploy.
 
-## Documentation
+## Getting Started
 
-For full documentation, visit [laravel-zero.com](http://laravel-zero.com/).
+There's a few basics that we believe are important to using Kubernetes in an organisation:
 
-## Support the development
-**Do you like this project? Support it by donating**
-
-- PayPal: [Donate](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=66BYDWAT92N6L)
-- Patreon: [Donate](https://www.patreon.com/nunomaduro)
-
-## License
-
-Laravel Zero is an open-source software licensed under the [MIT license](https://github.com/laravel-zero/laravel-zero/blob/stable/LICENSE.md).
+* 

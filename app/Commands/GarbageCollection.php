@@ -116,6 +116,28 @@ class GarbageCollection extends Command
 
         }
 
+        // Certificates
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get certificates --all-namespaces -o json";
+
+        $certificates = shell_exec($command);
+
+        $certificates = json_decode($certificates, TRUE);
+
+        foreach ($certificates['items'] as $key => $certificate) {
+
+            if (isset($certificate['metadata']['annotations']['ttl']) && $certificate['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $certificate['metadata']['name'],
+                    'namespace' => $certificate['metadata']['namespace'],
+                    'kind' => $certificate['kind'],
+                    'ttl' => $certificate['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
         // Services
 
         $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get services --all-namespaces -o json";
