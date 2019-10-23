@@ -94,6 +94,28 @@ class GarbageCollection extends Command
 
         }
 
+        // Statefulsets
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get cronjobs --all-namespaces -o json";
+
+        $cronjobs = shell_exec($command);
+
+        $cronjobs = json_decode($cronjobs, TRUE);
+
+        foreach ($cronjobs['items'] as $key => $cronjob) {
+
+            if (isset($cronjob['metadata']['annotations']['ttl']) && $cronjob['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $cronjob['metadata']['name'],
+                    'namespace' => $cronjob['metadata']['namespace'],
+                    'kind' => $cronjob['kind'],
+                    'ttl' => $cronjob['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
         // HPA
 
         $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get hpa --all-namespaces -o json";
