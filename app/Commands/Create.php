@@ -394,6 +394,8 @@ class Create extends Command
 
         $yamlFiles->queue('HorizontalPodAutoscaler');
         $yamlFiles->queue('Ingress');
+        $yamlFiles->queue('IngressRoute');
+        $yamlFiles->queue('Middleware');
         $yamlFiles->queue('Certificate');
         $yamlFiles->queue('Service');
         $yamlFiles->queue('PodDisruptionBudget');
