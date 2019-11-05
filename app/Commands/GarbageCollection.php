@@ -204,6 +204,28 @@ class GarbageCollection extends Command
 
         }
 
+        // Traefik Ingresses
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get IngressRoute --all-namespaces -o json";
+
+        $traefikIngresses = shell_exec($command);
+
+        $traefikIngresses = json_decode($traefikIngresses, TRUE);
+
+        foreach ($traefikIngresses['items'] as $key => $ingress) {
+
+            if (isset($ingress['metadata']['annotations']['ttl']) && $ingress['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $ingress['metadata']['name'],
+                    'namespace' => $ingress['metadata']['namespace'],
+                    'kind' => $ingress['kind'],
+                    'ttl' => $ingress['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
         $this->table(
             // Headers
             [
