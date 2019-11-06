@@ -226,6 +226,28 @@ class GarbageCollection extends Command
 
         }
 
+        // Pod Disruption Budgets
+
+        $command = "kubectl --kubeconfig=" . $this->option('kubeconfig') . " get pdb --all-namespaces -o json";
+
+        $pdbs = shell_exec($command);
+
+        $pdbs = json_decode($pdbs, TRUE);
+
+        foreach ($pdbs['items'] as $key => $pdb) {
+
+            if (isset($pdb['metadata']['annotations']['ttl']) && $pdb['metadata']['annotations']['ttl'] < date("U"))
+            {
+                array_push($resources, array(
+                    'name' => $pdb['metadata']['name'],
+                    'namespace' => $pdb['metadata']['namespace'],
+                    'kind' => $pdb['kind'],
+                    'ttl' => $pdb['metadata']['annotations']['ttl']
+                ));
+            }
+
+        }
+
         $this->table(
             // Headers
             [
