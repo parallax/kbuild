@@ -179,7 +179,7 @@ class YamlFiles {
                 $repeat = null;
                 $contentsArray = Yaml::parse($contents);
                 // TTL handling
-                if (isset($this->ttl)) {
+                if (isset($this->ttl) && $this->ttl !== FALSE) {
                     $contentsArray['metadata']['annotations']['ttl'] = $this->ttl;
                 }
                 array_push($this->parsedYamlContents, array(
