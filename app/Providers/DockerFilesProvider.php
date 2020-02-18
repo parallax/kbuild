@@ -149,14 +149,14 @@ class DockerFiles {
                     $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
                     $awsRegion = $this->settings['aws']['region'];
 
-                    $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --region=$awsRegion --no-include-email`;
-                    preg_match('/-p (.*\ )/', $dockerLogin, $dockerPassword);
-                    $dockerPassword = $dockerPassword[1];
-                    preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
-                    $repositoryBase = $repositoryBase[1];
-    
+                    $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login-password --region=$awsRegion`;
+        
+                    $repositoryBase = $this->settings['aws']['641040317354'] . '.dkr.ecr.' . $this->settings['aws']['region'] . '.amazonaws.com';
+
+                    $command = "echo \"$dockerLogin\" | docker login -u AWS --password-stdin " . $repositoryBase;
+
                     // Run ECR login
-                    $ecrLogin = `echo $dockerPassword | docker login -u AWS --password-stdin $repositoryBase`;
+                    $ecrLogin = `$command`;
     
                     // Ensure that the ECR repository exists for this app
                     // Describe the repositories on the account
@@ -178,9 +178,7 @@ class DockerFiles {
                     if ($repositoryExists === FALSE) {
                         $createRepository = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr create-repository --repository-name $app`;
                     }
-    
-                    $repositoryBase = str_replace('https://', '', $repositoryBase);
-    
+        
                     $tag = $repositoryBase . '/' . $app . ':' . $dockerFile . '-' . $branch . '-' . $build;
                     $this->imageTags[$dockerFile] = $tag;
                     if ($actuallyBuild === true) {
