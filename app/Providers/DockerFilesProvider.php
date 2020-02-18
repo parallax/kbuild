@@ -100,7 +100,7 @@ class DockerFiles {
 
                 $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login-password --region=$awsRegion`;
         
-                $repositoryBase = $this->settings['aws']['641040317354'] . '.dkr.ecr.' . $this->settings['aws']['region'] . '.amazonaws.com';
+                $repositoryBase = $this->settings['aws']['accountId'] . '.dkr.ecr.' . $this->settings['aws']['region'] . '.amazonaws.com';
 
                 $command = "echo \"$dockerLogin\" | docker login -u AWS --password-stdin " . $repositoryBase;
 
@@ -151,7 +151,7 @@ class DockerFiles {
 
                     $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login-password --region=$awsRegion`;
         
-                    $repositoryBase = $this->settings['aws']['641040317354'] . '.dkr.ecr.' . $this->settings['aws']['region'] . '.amazonaws.com';
+                    $repositoryBase = $this->settings['aws']['accountId'] . '.dkr.ecr.' . $this->settings['aws']['region'] . '.amazonaws.com';
 
                     $command = "echo \"$dockerLogin\" | docker login -u AWS --password-stdin " . $repositoryBase;
 
