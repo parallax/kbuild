@@ -98,9 +98,14 @@ class DockerFiles {
                 $awsSecretAccessKey = $this->settings['aws']['awsSecretAccessKey'];
                 $awsRegion = $this->settings['aws']['region'];
 
-                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login --region=$awsRegion --no-include-email`;
-                preg_match('/(https:\/\/.*)/', $dockerLogin, $repositoryBase);
-                $repositoryBase = str_replace('https://', '', $repositoryBase[1]);
+                $dockerLogin = `export AWS_ACCESS_KEY_ID=$awsAccessKeyId && export AWS_SECRET_ACCESS_KEY=$awsSecretAccessKey && aws ecr get-login-password --region=$awsRegion`;
+        
+                $repositoryBase = $this->settings['aws']['641040317354'] . '.dkr.ecr.' . $this->settings['aws']['region'] . '.amazonaws.com';
+
+                $command = "echo \"$dockerLogin\" | docker login -u AWS --password-stdin " . $repositoryBase;
+
+                // Run ECR login
+                $ecrLogin = `$command`;
 
                 break;
             
